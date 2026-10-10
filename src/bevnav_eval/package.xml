@@ -3,9 +3,14 @@
 <package format="3">
   <name>bevnav_eval</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>BEVNav evaluation: trial runner, bag analysis, figures, dataset collection, segmentation training, ground-truth grids.</description>
   <maintainer email="bluegoose@todo.todo">bluegoose</maintainer>
   <license>TODO: License declaration</license>
+
+  <exec_depend>rosbag2_py</exec_depend>
+  <exec_depend>bevnav_core</exec_depend>
+  <exec_depend>python3-matplotlib</exec_depend>
+  <!-- torch comes from ~/bevnav_venv (requirements.txt), not rosdep -->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

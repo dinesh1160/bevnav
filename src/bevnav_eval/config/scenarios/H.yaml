@@ -1,0 +1,6 @@
+# Scenario H: Goal in the shelf bay behind ShelfE_002. World frame, metres, radians.
+world: H_hidden_goal.sdf
+start_pose: [0.8, -9, 1.5708]      # x, y, yaw
+goal: [4, -3.935]             # x, y
+centerline: [[0.8, -9], [0.8, -3.935], [4, -3.935]]   # reference route; lateral deviation is measured to it
+route_length_m: 8.265

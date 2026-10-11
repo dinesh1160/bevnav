@@ -1,0 +1,4 @@
+# Scenario F: lighting variants of A-D. Worlds are F_<base>_<lighting>.sdf;
+# start pose, goal, centre-line and route length come from <base>.yaml.
+base_scenarios: [A, B, C, D]
+lighting: [dim, bright, directional]

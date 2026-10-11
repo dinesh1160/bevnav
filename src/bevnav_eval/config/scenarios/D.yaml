@@ -1,0 +1,6 @@
+# Scenario D: Narrow 0.6 m gap at y = -4.0 in the aisle. World frame, metres, radians.
+world: D_narrow_gap.sdf
+start_pose: [-3.64, -6.5, 1.5708]      # x, y, yaw
+goal: [-3.64, 8.5]             # x, y
+centerline: [[-3.64, -6.5], [-3.64, 8.5]]   # reference route; lateral deviation is measured to it
+route_length_m: 15.000

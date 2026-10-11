@@ -1,0 +1,8 @@
+# Evaluation parameters (CLAUDE.md Section 6, Evaluation).
+
+gt_grid:
+  resolution_m: 0.05          # [OURS] cell size, matches memory.resolution_m
+  z_min_m: 0.02               # [OURS] geometry must reach above this height ...
+  z_max_m: 0.35               # [OURS] ... and start below this one (excludes roof and lamps)
+  origin_m: [-7.5, -11.0]     # [OURS] world (x, y) of the grid's lower-left corner
+  size_m: [15.0, 22.0]        # [OURS] covers the 14.0 x 20.9 m warehouse

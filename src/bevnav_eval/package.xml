@@ -10,6 +10,9 @@
   <exec_depend>rosbag2_py</exec_depend>
   <exec_depend>bevnav_core</exec_depend>
   <exec_depend>python3-matplotlib</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>bevnav_sim</exec_depend>
   <!-- torch comes from ~/bevnav_venv (requirements.txt), not rosdep -->
 
   <test_depend>ament_copyright</test_depend>

@@ -1,0 +1,6 @@
+# Scenario B: L junction, turn east out of the aisle. World frame, metres, radians.
+world: B_junction.sdf
+start_pose: [-3.64, -6.5, 1.5708]      # x, y, yaw
+goal: [1, -1]             # x, y
+centerline: [[-3.64, -6.5], [-3.64, -1], [1, -1]]   # reference route; lateral deviation is measured to it
+route_length_m: 10.140

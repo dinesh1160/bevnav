@@ -1,0 +1,6 @@
+# Scenario C: Floor clutter on the open south floor. World frame, metres, radians.
+world: C_clutter.sdf
+start_pose: [-0.5, -9, 1.5708]      # x, y, yaw
+goal: [-0.5, 0.5]             # x, y
+centerline: [[-0.5, -9], [-0.5, 0.5]]   # reference route; lateral deviation is measured to it
+route_length_m: 9.500

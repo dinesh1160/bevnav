@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<!--
+  BEVNav rover: 4-wheel skid-steer chassis, roof-centre mast with a pan joint carrying one
+  RGB camera. Every number comes from config/robot.yaml. Frames follow CLAUDE.md Section 5.
+  Args: seg_camera (true/false) adds the simulator-only label camera.
+-->
+<robot name="beetlebot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="seg_camera" default="true"/>
+  <xacro:property name="r" value="${xacro.load_yaml('$(find bevnav_sim)/config/robot.yaml')}"/>
+
+  <xacro:property name="body_z" value="${r.chassis.clearance_m + r.chassis.size_m[2] / 2}"/>
+  <xacro:property name="roof_z" value="${r.chassis.size_m[2] / 2}"/>
+  <xacro:property name="pan_z" value="${r.camera.height_m - body_z}"/>
+
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m * (y * y + z * z) / 12}" ixy="0" ixz="0"
+               iyy="${m * (x * x + z * z) / 12}" iyz="0" izz="${m * (x * x + y * y) / 12}"/>
+    </inertial>
+  </xacro:macro>
+
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <visual>
+      <geometry><box size="${r.chassis.size_m[0]} ${r.chassis.size_m[1]} ${r.chassis.size_m[2]}"/></geometry>
+    </visual>
+    <collision>
+      <geometry><box size="${r.chassis.size_m[0]} ${r.chassis.size_m[1]} ${r.chassis.size_m[2]}"/></geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 ${(roof_z + pan_z) / 2}"/>
+      <geometry><cylinder radius="${r.mast.radius_m}" length="${pan_z - roof_z}"/></geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${(roof_z + pan_z) / 2}"/>
+      <geometry><cylinder radius="${r.mast.radius_m}" length="${pan_z - roof_z}"/></geometry>
+    </collision>
+    <xacro:box_inertia m="${r.chassis.mass_kg}" x="${r.chassis.size_m[0]}"
+                       y="${r.chassis.size_m[1]}" z="${r.chassis.size_m[2]}"/>
+  </link>
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${body_z}"/>
+  </joint>
+
+  <xacro:macro name="wheel" params="name x y">
+    <link name="${name}_wheel_link">
+      <visual>
+        <origin rpy="${pi / 2} 0 0"/>
+        <geometry><cylinder radius="${r.wheels.radius_m}" length="${r.wheels.width_m}"/></geometry>
+      </visual>
+      <collision>
+        <origin rpy="${pi / 2} 0 0"/>
+        <geometry><cylinder radius="${r.wheels.radius_m}" length="${r.wheels.width_m}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="${r.wheels.mass_kg}"/>
+        <inertia ixx="${r.wheels.mass_kg * (3 * r.wheels.radius_m ** 2 + r.wheels.width_m ** 2) / 12}"
+                 ixy="0" ixz="0" iyy="${r.wheels.mass_kg * r.wheels.radius_m ** 2 / 2}" iyz="0"
+                 izz="${r.wheels.mass_kg * (3 * r.wheels.radius_m ** 2 + r.wheels.width_m ** 2) / 12}"/>
+      </inertial>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_wheel_link"/>
+      <origin xyz="${x} ${y} ${r.wheels.radius_m - body_z}"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+    <gazebo reference="${name}_wheel_link">
+      <mu1>${r.wheels.mu}</mu1>
+      <mu2>${r.wheels.mu2}</mu2>
+    </gazebo>
+  </xacro:macro>
+  <xacro:wheel name="front_left" x="${r.wheels.wheelbase_m / 2}" y="${r.wheels.track_m / 2}"/>
+  <xacro:wheel name="rear_left" x="${-r.wheels.wheelbase_m / 2}" y="${r.wheels.track_m / 2}"/>
+  <xacro:wheel name="front_right" x="${r.wheels.wheelbase_m / 2}" y="${-r.wheels.track_m / 2}"/>
+  <xacro:wheel name="rear_right" x="${-r.wheels.wheelbase_m / 2}" y="${-r.wheels.track_m / 2}"/>
+
+  <!-- Pan head on top of the mast; the lens sits on the pan axis (camera.pan_offset_m). -->
+  <link name="camera_pan_link">
+    <visual>
+      <geometry><box size="${r.camera.housing_size_m} ${r.camera.housing_size_m} ${r.camera.housing_size_m}"/></geometry>
+    </visual>
+    <xacro:box_inertia m="${r.pan.mass_kg}" x="${r.camera.housing_size_m}"
+                       y="${r.camera.housing_size_m}" z="${r.camera.housing_size_m}"/>
+  </link>
+  <joint name="camera_pan_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="camera_pan_link"/>
+    <origin xyz="0 0 ${pan_z}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="camera_link"/>
+  <joint name="camera_joint" type="fixed">
+    <parent link="camera_pan_link"/>
+    <child link="camera_link"/>
+    <origin xyz="${r.camera.pan_offset_m} 0 0" rpy="0 ${r.camera.pitch_rad} 0"/>
+  </joint>
+
+  <link name="camera_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+    <origin rpy="${-pi / 2} 0 ${-pi / 2}"/>
+  </joint>
+
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <link name="lidar_link">
+    <visual>
+      <geometry><cylinder radius="${r.lidar.housing_radius_m}" length="${r.lidar.housing_height_m}"/></geometry>
+    </visual>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 ${r.lidar.height_m - body_z}"/>
+  </joint>
+
+  <xacro:include filename="$(find bevnav_sim)/urdf/sensors.xacro"/>
+  <xacro:include filename="$(find bevnav_sim)/urdf/gazebo.xacro"/>
+</robot>

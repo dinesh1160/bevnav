@@ -1,0 +1,57 @@
+# BEVNav rover geometry and sensors (CLAUDE.md Section 6). Every number in the robot
+# xacro comes from here. Metres, radians, kilograms, hertz. Values are [OURS] estimates
+# for a BeetleBot-class rover unless tagged [TUNE].
+
+chassis:
+  size_m: [0.375, 0.28, 0.20]   # body length (x), width (y), height (z); wheels sit outside
+  clearance_m: 0.03             # floor to body bottom; roof at 0.23 m
+  mass_kg: 5.0
+
+wheels:
+  radius_m: 0.06
+  width_m: 0.04
+  wheelbase_m: 0.25             # front-rear axle distance
+  track_m: 0.36                 # left-right wheel centre distance; overall width 0.40 m
+  separation_m: 0.50            # [TUNE] Stage 2: effective skid-steer separation (geometric 0.36 under-turns)
+  mass_kg: 0.3
+  mu: 1.0                       # [TUNE] Stage 2
+  mu2: 1.0                      # [TUNE] Stage 2
+
+mast:
+  radius_m: 0.015               # roof-centre post carrying the pan joint
+
+camera:
+  width_px: 640
+  height_px: 480
+  hfov_rad: 1.22                # 70 deg
+  height_m: 0.45                # lens above floor; roof corner stays below the image at every pan
+  pitch_rad: 0.2618             # 15 deg down
+  pan_offset_m: 0.0             # lens on the pan axis: pan is a pure rotation
+  rate_hz: 15                   # [TUNE] Stage 2
+  clip_near_m: 0.05
+  clip_far_m: 20.0
+  housing_size_m: 0.04            # cube around the lens (inside clip_near_m)
+
+pan:                            # continuous camera_pan_joint, JointPositionController in
+                                # velocity mode (servo-like): joint speed = p_gain * error
+  p_gain: 10.0                  # [TUNE] Stage 2: (rad/s) per rad; 60 deg settles within 0.5 deg in < 1 s
+  max_velocity_rad_s: 3.0       # servo top speed
+  mass_kg: 0.1                  # pan head + camera
+
+imu:
+  rate_hz: 100
+  gyro_noise_stddev: 0.002      # rad/s
+  accel_noise_stddev: 0.02      # m/s^2
+
+lidar:                          # evaluation only (/scan)
+  height_m: 0.30                # around the mast, below the camera's view
+  housing_radius_m: 0.04
+  housing_height_m: 0.04
+  rate_hz: 10
+  samples: 360
+  range_min_m: 0.10
+  range_max_m: 12.0
+
+odom_rate_hz: 50                # diff-drive /odom
+joint_state_rate_hz: 50         # /joint_states
+gt_pose_rate_hz: 50             # /gt/pose (evaluation only)

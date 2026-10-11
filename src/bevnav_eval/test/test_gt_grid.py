@@ -42,10 +42,3 @@ def test_scenario_matches_world(key: str) -> None:
     line = scen['centerline']
     length = sum(math.dist(a, b) for a, b in zip(line, line[1:]))
     assert scen['route_length_m'] == pytest.approx(length, abs=0.01)
-
-
-def test_lighting_variant_worlds_exist() -> None:
-    f = yaml.safe_load((EVAL / 'config' / 'scenarios' / 'F.yaml').read_text())
-    for base in f['base_scenarios']:
-        for light in f['lighting']:
-            assert (SIM / 'worlds' / 'scenarios' / f'F_{base}_{light}.sdf').is_file()

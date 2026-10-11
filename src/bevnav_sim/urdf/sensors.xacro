@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+  Sensors (CLAUDE.md Section 5). Navigation uses only the RGB camera and the IMU.
+  The label camera (simulator-only ground truth), lidar, contact sensor and ground-truth
+  pose are evaluation inputs. Expects the property r (robot.yaml) from beetlebot.urdf.xacro.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="camera_body">
+    <horizontal_fov>${r.camera.hfov_rad}</horizontal_fov>
+    <image>
+      <width>${r.camera.width_px}</width>
+      <height>${r.camera.height_px}</height>
+    </image>
+    <clip>
+      <near>${r.camera.clip_near_m}</near>
+      <far>${r.camera.clip_far_m}</far>
+    </clip>
+    <optical_frame_id>camera_optical_frame</optical_frame_id>
+  </xacro:macro>
+
+  <gazebo reference="camera_link">
+    <sensor name="camera" type="camera">
+      <topic>camera/image_raw</topic>
+      <camera>
+        <xacro:camera_body/>
+      </camera>
+      <always_on>1</always_on>
+      <update_rate>${r.camera.rate_hz}</update_rate>
+    </sensor>
+    <xacro:if value="$(arg seg_camera)">
+      <sensor name="seg_camera" type="segmentation">
+        <topic>seg_camera</topic>
+        <gz_frame_id>camera_optical_frame</gz_frame_id>
+        <camera>
+          <segmentation_type>semantic</segmentation_type>
+          <xacro:camera_body/>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>${r.camera.rate_hz}</update_rate>
+      </sensor>
+    </xacro:if>
+  </gazebo>
+
+  <xacro:macro name="imu_noise" params="stddev">
+    <noise type="gaussian"><mean>0</mean><stddev>${stddev}</stddev></noise>
+  </xacro:macro>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <always_on>1</always_on>
+      <update_rate>${r.imu.rate_hz}</update_rate>
+      <imu>
+        <angular_velocity>
+          <x><xacro:imu_noise stddev="${r.imu.gyro_noise_stddev}"/></x>
+          <y><xacro:imu_noise stddev="${r.imu.gyro_noise_stddev}"/></y>
+          <z><xacro:imu_noise stddev="${r.imu.gyro_noise_stddev}"/></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><xacro:imu_noise stddev="${r.imu.accel_noise_stddev}"/></x>
+          <y><xacro:imu_noise stddev="${r.imu.accel_noise_stddev}"/></y>
+          <z><xacro:imu_noise stddev="${r.imu.accel_noise_stddev}"/></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="gpu_lidar">
+      <topic>scan</topic>
+      <gz_frame_id>lidar_link</gz_frame_id>
+      <always_on>1</always_on>
+      <update_rate>${r.lidar.rate_hz}</update_rate>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>${r.lidar.samples}</samples>
+            <min_angle>${-pi}</min_angle>
+            <max_angle>${pi}</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>${r.lidar.range_min_m}</min>
+          <max>${r.lidar.range_max_m}</max>
+        </range>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="base_link">
+    <sensor name="chassis_contact" type="contact">
+      <contact>
+        <!-- URDF->SDF merges base_link into base_footprint and renames the chassis collision. -->
+        <collision>base_footprint_fixed_joint_lump__base_link_collision</collision>
+        <topic>contact</topic>
+      </contact>
+    </sensor>
+  </gazebo>
+</robot>

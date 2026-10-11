@@ -30,6 +30,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'gt_tf_relay_node = bevnav_ros.gt_tf_relay_node:main',
         ],
     },
 )

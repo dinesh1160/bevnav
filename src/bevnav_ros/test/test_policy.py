@@ -2,8 +2,8 @@
 Project policy tests (CLAUDE.md Rules 7 and 8, Section 4).
 
 (a) No file in bevnav_core imports rclpy, message packages, tf2 or torch.
-(b) No navigation module refers to /scan, /gt/pose or /contact; only gt_mask_node
-    refers to /seg_camera/labels_map.
+(b) No navigation module refers to /scan or /contact; only gt_mask_node refers to
+    /seg_camera/labels_map and only gt_tf_relay_node refers to /gt/pose.
 (c) Inside bevnav_ros, torch and transformers are imported only in segmentation/.
 
 Sources are parsed with ast, so comments and docstrings never trigger a match.
@@ -16,9 +16,9 @@ from typing import Iterator, List, Optional, Set
 
 import pytest
 
-EVAL_ONLY_TOPICS = {'scan', 'gt/pose', 'contact'}
-GT_LABELS_TOPIC = 'seg_camera/labels_map'
+EVAL_ONLY_TOPICS = {'scan', 'contact'}
 GT_LABELS_READER = 'gt_mask_node.py'
+GT_READERS = {'seg_camera/labels_map': GT_LABELS_READER, 'gt/pose': 'gt_tf_relay_node.py'}
 TORCH_MODULES = {'torch', 'transformers'}
 
 
@@ -70,9 +70,7 @@ def topic_violations(ros_dir: Path) -> List[str]:
     for path in _python_files(ros_dir):
         for value in _string_constants(ast.parse(path.read_text(), str(path))):
             topic = value.lstrip('/')
-            if topic in EVAL_ONLY_TOPICS:
-                found.append(f'{path.name}: {value}')
-            elif topic == GT_LABELS_TOPIC and path.name != GT_LABELS_READER:
+            if topic in EVAL_ONLY_TOPICS or GT_READERS.get(topic, path.name) != path.name:
                 found.append(f'{path.name}: {value}')
     return found
 
@@ -141,6 +139,11 @@ def test_topic_checker_labels_map_only_in_gt_mask_node(tmp_path: Path) -> None:
     assert topic_violations(tmp_path) == []
     (tmp_path / 'bev_node.py').write_text("TOPIC = '/seg_camera/labels_map'\n")
     assert topic_violations(tmp_path) == ['bev_node.py: /seg_camera/labels_map']
+
+
+def test_topic_checker_gt_pose_only_in_gt_tf_relay(tmp_path: Path) -> None:
+    (tmp_path / 'gt_tf_relay_node.py').write_text("TOPIC = '/gt/pose'\n")
+    assert topic_violations(tmp_path) == []
 
 
 def test_torch_checker(tmp_path: Path) -> None:

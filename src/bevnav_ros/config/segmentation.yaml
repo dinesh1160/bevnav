@@ -1,0 +1,10 @@
+# Segmentation parameters (CLAUDE.md Section 6). Labels are the gz-sim-label-system values
+# set in the bevnav_sim worlds and models; the label image repeats the value in R, G and B.
+/**:
+  ros__parameters:
+    labels:
+      floor: 1
+      shelf: 2
+      pallet_box: 3     # boxes, pallets and other floor obstacles
+      person: 4         # reserved; scenario E (people) was dropped
+      wall: 5           # walls, roof and lamps

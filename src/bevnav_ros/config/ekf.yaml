@@ -10,18 +10,16 @@ ekf_filter_node:
     base_link_frame: base_footprint
     world_frame: odom
 
-    odom0: /odom                      # diff-drive wheel odometry: forward and yaw velocity
-    odom0_config: [false, false, false,
-                   false, false, false,
+    odom0: /odom                      # wheel odometry: forward velocity only. Skid-steer wheels
+    odom0_config: [false, false, false,  # slip in turns, so their yaw rate is not fused (Stage 2:
+                   false, false, false,  # 7.1 deg yaw error over 20 m with it)
                    true,  false, false,
-                   false, false, true,
+                   false, false, false,
                    false, false, false]
 
-    imu0: /imu                        # yaw and yaw rate; relative so odom starts at yaw 0
-    imu0_config: [false, false, false,
-                  false, false, true,
+    imu0: /imu                        # yaw rate only: Gazebo's absolute IMU yaw is exact, so fusing
+    imu0_config: [false, false, false,  # it would copy ground truth (CLAUDE.md Section 9)
+                  false, false, false,
                   false, false, false,
                   false, false, true,
                   false, false, false]
-    imu0_relative: true
-    imu0_remove_gravitational_acceleration: true

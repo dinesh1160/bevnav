@@ -31,6 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
             'make_gt_grid = bevnav_eval.make_gt_grid:main',
+            'bev_range_check = bevnav_eval.bev_range_check:main',
         ],
     },
 )

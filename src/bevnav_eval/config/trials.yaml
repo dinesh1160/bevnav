@@ -6,3 +6,10 @@ gt_grid:
   z_max_m: 0.35               # [OURS] ... and start below this one (excludes roof and lamps)
   origin_m: [-7.5, -11.0]     # [OURS] world (x, y) of the grid's lower-left corner
   size_m: [15.0, 22.0]        # [OURS] covers the 14.0 x 20.9 m warehouse
+
+bev_range_check:              # Stage 3 range test in worlds/calibration/bev_ranges.sdf
+  ranges_m: [0.75, 1.0, 2.0, 3.0, 4.0, 5.0]   # [OURS] near face of the box ahead of base_footprint
+  box_size_m: 0.5             # matches model://bevnav_box
+  eval_half_width_m: 0.2      # [OURS] columns |y| below this (inside the 0.5 m face) are measured
+  settle_s: 1.0               # [OURS] sim time after a move before views are used
+  views_per_range: 10         # [OURS]

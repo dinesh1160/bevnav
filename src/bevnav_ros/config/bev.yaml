@@ -1,0 +1,8 @@
+# BEV grid (CLAUDE.md Section 6). Galvis Table I values are [PAPER].
+/**:
+  ros__parameters:
+    bev:
+      size_px: [480, 480]       # [PAPER] rows (x), cols (y)
+      x_range_m: [0.0, 5.3]     # [PAPER] ahead of base_footprint
+      y_range_m: [-3.0, 3.0]    # [PAPER] left positive
+      debug_grid_m: 0.5         # [OURS] metric grid spacing on /bev/debug

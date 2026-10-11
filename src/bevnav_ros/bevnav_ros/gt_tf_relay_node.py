@@ -6,9 +6,9 @@ CLAUDE.md Section 7). Each TF copies the stamp of the /gt/pose message it came f
 """
 
 from bevnav_core.transforms import relative_pose
+from bevnav_ros import run
 from bevnav_ros.conversions import odometry_to_pose2d, pose2d_to_transform
 from nav_msgs.msg import Odometry
-import rclpy
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 
@@ -34,9 +34,7 @@ class GtTfRelay(Node):
 
 def main() -> None:
     """Run the node."""
-    rclpy.init()
-    rclpy.spin(GtTfRelay())
-    rclpy.shutdown()
+    run(GtTfRelay)
 
 
 if __name__ == '__main__':

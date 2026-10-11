@@ -1,0 +1,5 @@
+# Ray-cast and fusion (CLAUDE.md Section 6). The fusion entries arrive in Stage 6.
+/**:
+  ros__parameters:
+    fusion:
+      ray_step_rad: 0.0087      # [OURS] 0.5 deg between rays

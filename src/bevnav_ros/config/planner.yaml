@@ -1,0 +1,5 @@
+# Galvis planner (CLAUDE.md Section 6). The remaining entries arrive in Stage 4.
+/**:
+  ros__parameters:
+    planner:
+      rate_hz: 1.0              # [PAPER] also the /bev/mask rate

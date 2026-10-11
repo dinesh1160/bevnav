@@ -1,9 +1,9 @@
 """
 Single entry point for BEVNav: simulation plus navigation (CLAUDE.md Section 4).
 
-Sets use_sim_time once for every node. Stage 2 wiring: Gazebo with the scenario world and
-the rover at its start pose (bevnav_eval/config/scenarios/<scenario>.yaml), and the source of
-odom -> base_footprint (EKF or ground-truth relay). Navigation nodes come in later stages.
+Sets use_sim_time once for every node. Starts Gazebo with the scenario world and the rover
+at its start pose (bevnav_eval/config/scenarios/<scenario>.yaml), the source of
+odom -> base_footprint (EKF or ground-truth relay), and the navigation nodes (nav.launch.py).
 """
 
 import os
@@ -54,7 +54,10 @@ def _wire(context):
         pose = Node(package='bevnav_ros', executable='gt_tf_relay_node', name='gt_tf_relay')
     else:
         raise RuntimeError('pose_source:=wheel (EKF without IMU) arrives in Stage 7')
-    return [sim, pose]
+    nav = IncludeLaunchDescription(
+        os.path.join(get_package_share_directory('bevnav_ros'), 'launch', 'nav.launch.py'),
+        launch_arguments={'pipeline': arg['pipeline'], 'seg_backend': arg['seg_backend']}.items())
+    return [sim, pose, nav]
 
 
 def generate_launch_description() -> LaunchDescription:

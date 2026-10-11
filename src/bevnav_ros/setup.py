@@ -31,6 +31,8 @@ setup(
     entry_points={
         'console_scripts': [
             'gt_tf_relay_node = bevnav_ros.gt_tf_relay_node:main',
+            'gt_mask_node = bevnav_ros.gt_mask_node:main',
+            'bev_node = bevnav_ros.bev_node:main',
         ],
     },
 )

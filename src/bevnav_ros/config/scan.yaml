@@ -1,0 +1,5 @@
+# Six-heading scan (CLAUDE.md Section 6). The remaining entries arrive in Stage 6.
+/**:
+  ros__parameters:
+    scan:
+      settle_tol_rad: 0.0087    # [OURS] 0.5 deg; bev_node uses only frames with |pan| below this

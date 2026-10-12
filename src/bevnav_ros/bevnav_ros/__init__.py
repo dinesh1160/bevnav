@@ -17,3 +17,11 @@ def run(node_class) -> None:
             raise  # a real error, not a callback racing the shutdown
     node.destroy_node()
     rclpy.try_shutdown()
+
+
+def declare(node, spec: dict) -> dict:
+    """Declare {name: (default, description)} parameters; return {name: value}."""
+    from rcl_interfaces.msg import ParameterDescriptor
+    return {name: node.declare_parameter(
+        name, default, ParameterDescriptor(description=desc)).value
+        for name, (default, desc) in spec.items()}

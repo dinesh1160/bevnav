@@ -6,8 +6,8 @@ from bevnav_core.bev import FREE, OCCUPIED
 from bevnav_core.camera_model import PinholeCamera
 from bevnav_core.transforms import Pose2D
 from builtin_interfaces.msg import Time
-from geometry_msgs.msg import TransformStamped
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
+from nav_msgs.msg import Odometry, Path
 import numpy as np
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Header
@@ -38,7 +38,9 @@ def pose2d_to_transform(pose: Pose2D, stamp: Time, parent: str, child: str) -> T
 
 
 def image_to_array(msg: Image) -> np.ndarray:
-    """mono8 -> (H, W) uint8; rgb8 -> (H, W, 3) uint8 (RGB order, as Gazebo sends it)."""
+    """mono8 -> (H, W) uint8; rgb8 -> (H, W, 3) uint8 (RGB order); 32FC1 -> (H, W) float32."""
+    if msg.encoding == '32FC1':
+        return np.frombuffer(msg.data, np.float32).reshape(msg.height, msg.width)
     ch = _CHANNELS[msg.encoding]
     rows = np.frombuffer(msg.data, np.uint8).reshape(msg.height, msg.step)
     a = rows[:, :msg.width * ch].reshape(msg.height, msg.width, ch)
@@ -46,11 +48,14 @@ def image_to_array(msg: Image) -> np.ndarray:
 
 
 def array_to_image(array: np.ndarray, header: Header) -> Image:
-    """(H, W) uint8 -> mono8, (H, W, 3) uint8 -> rgb8, keeping the given header."""
-    a = np.ascontiguousarray(array, np.uint8)
-    msg = Image(header=header, height=a.shape[0], width=a.shape[1])
-    msg.encoding = 'mono8' if a.ndim == 2 else 'rgb8'
-    msg.step = a.shape[1] * (1 if a.ndim == 2 else 3)
+    """(H, W) uint8 -> mono8, (H, W, 3) uint8 -> rgb8, (H, W) float32 -> 32FC1; keeps header."""
+    if array.dtype == np.float32:
+        a, encoding, bytes_per_px = np.ascontiguousarray(array), '32FC1', 4
+    else:
+        a = np.ascontiguousarray(array, np.uint8)
+        encoding, bytes_per_px = ('mono8', 1) if a.ndim == 2 else ('rgb8', 3)
+    msg = Image(header=header, height=a.shape[0], width=a.shape[1], encoding=encoding)
+    msg.step = a.shape[1] * bytes_per_px
     msg.data = a.tobytes()
     return msg
 
@@ -70,9 +75,10 @@ def tristate_to_image_array(view: np.ndarray) -> np.ndarray:
     return out
 
 
-def tristate_to_drivable_array(view: np.ndarray) -> np.ndarray:
-    """Core tri-state -> /bev/mask values: 255 = drivable (free), 0 = anything else."""
-    return np.where(view == FREE, 255, 0).astype(np.uint8)
+def tristate_to_drivable_array(view: np.ndarray, also_drivable: np.ndarray,
+                               blocked: np.ndarray) -> np.ndarray:
+    """/bev/mask values: 255 = (free or also_drivable) and not blocked (bool masks), else 0."""
+    return np.where(((view == FREE) | also_drivable) & ~blocked, 255, 0).astype(np.uint8)
 
 
 def transform_to_matrix(t: TransformStamped) -> np.ndarray:
@@ -92,3 +98,40 @@ def camera_from_msgs(info: CameraInfo, base_from_optical: TransformStamped) -> P
     k = info.k
     return PinholeCamera(k[0], k[4], k[2], k[5], info.width, info.height,
                          transform_to_matrix(base_from_optical))
+
+
+def transform_to_pose2d(t: TransformStamped) -> Pose2D:
+    """Planar pose of the child frame in the parent frame (yaw from the quaternion)."""
+    q, p = t.transform.rotation, t.transform.translation
+    yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+    return Pose2D(p.x, p.y, yaw)
+
+
+def pose_stamped_to_pose2d(msg: PoseStamped) -> Pose2D:
+    """Planar pose (m, rad) of a PoseStamped."""
+    p, q = msg.pose.position, msg.pose.orientation
+    yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+    return Pose2D(p.x, p.y, yaw)
+
+
+def array_to_path(points: np.ndarray, header: Header) -> Path:
+    """(N, 2) metres -> nav_msgs/Path in header.frame_id; every pose shares the header stamp."""
+    msg = Path(header=header)
+    for x, y in points:
+        pose = PoseStamped(header=header)
+        pose.pose.position.x, pose.pose.position.y = float(x), float(y)
+        pose.pose.orientation.w = 1.0
+        msg.poses.append(pose)
+    return msg
+
+
+def path_to_array(msg: Path) -> np.ndarray:
+    """nav_msgs/Path -> (N, 2) metres in msg.header.frame_id."""
+    return np.array([[p.pose.position.x, p.pose.position.y] for p in msg.poses]).reshape(-1, 2)
+
+
+def velocity_to_twist(v: float, omega: float) -> Twist:
+    """Forward speed (m/s) and yaw rate (rad/s) -> Twist."""
+    t = Twist()
+    t.linear.x, t.angular.z = float(v), float(omega)
+    return t

@@ -33,6 +33,9 @@ setup(
             'gt_tf_relay_node = bevnav_ros.gt_tf_relay_node:main',
             'gt_mask_node = bevnav_ros.gt_mask_node:main',
             'bev_node = bevnav_ros.bev_node:main',
+            'costmap_node = bevnav_ros.costmap_node:main',
+            'planner_node = bevnav_ros.planner_node:main',
+            'controller_node = bevnav_ros.controller_node:main',
         ],
     },
 )

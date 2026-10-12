@@ -2,7 +2,8 @@
 Navigation nodes for the given pipeline and seg_backend (CLAUDE.md Section 4).
 
 Included by bringup.launch.py (and evaluation launch files), which set use_sim_time.
-Stage 3 wiring: gt_mask_node (seg_backend:=gt) and bev_node.
+Wiring so far: gt_mask_node (seg_backend:=gt), bev_node, costmap_node, planner_node,
+controller_node.
 """
 
 import os
@@ -27,6 +28,12 @@ def _nodes(context):
         Node(package='bevnav_ros', executable='bev_node', name='bev',
              parameters=[yaml('bev'), yaml('fusion'), yaml('planner'), yaml('scan'),
                          {'pipeline': pipeline}]),
+        Node(package='bevnav_ros', executable='costmap_node', name='costmap',
+             parameters=[yaml('bev'), yaml('costmap')]),
+        Node(package='bevnav_ros', executable='planner_node', name='planner',
+             parameters=[yaml('bev'), yaml('planner')]),
+        Node(package='bevnav_ros', executable='controller_node', name='controller',
+             parameters=[yaml('controller')]),
     ]
 
 

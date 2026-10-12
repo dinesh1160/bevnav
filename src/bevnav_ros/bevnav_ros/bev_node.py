@@ -1,6 +1,11 @@
 """
 Floor mask to tri-state BEV view (/bev/view, /bev/debug) and, in pipeline:=baseline, /bev/mask.
 
+/bev/mask counts the blind zone in front of the rover (below the camera's view) as drivable
+on rays whose first visible cell is free floor, so the planner can start from the robot's own
+cell but not drive into an obstacle hidden at close range; and cells within bev.inflation_m of
+an obstacle are not drivable, so a path for a point keeps the rover's body clear (D9).
+
 The lookup table is built once, from the first CameraInfo and the base_footprint <-
 camera_optical_frame TF taken while the camera is at pan 0. Frames taken with the camera
 panned away from 0 are skipped (rotated views are fused in Stage 6).
@@ -8,12 +13,12 @@ panned away from 0 are skipped (rotated views are fused in Stage 6).
 
 import time
 
-from bevnav_core.bev import BevGrid, build_lut, debug_image, grid_lines, warp_floor_mask
-from bevnav_core.raycast import build_ray_bins, raycast
-from bevnav_ros import run
+from bevnav_core.bev import (BevGrid, build_lut, debug_image, grid_lines, inflate, OCCUPIED,
+                             warp_floor_mask)
+from bevnav_core.raycast import blind_zone, build_ray_bins, drivable_blind_cells, raycast
+from bevnav_ros import declare, run
 from bevnav_ros.conversions import (array_to_image, camera_from_msgs, image_to_array,
                                     tristate_to_drivable_array, tristate_to_image_array)
-from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
@@ -25,6 +30,7 @@ PARAMETERS = {  # name: (default = YAML value, description)
     'bev.x_range_m': ([0.0, 5.3], 'BEV x range ahead of base_footprint (m)'),
     'bev.y_range_m': ([-3.0, 3.0], 'BEV y range, left positive (m)'),
     'bev.debug_grid_m': (0.5, 'Metric grid spacing on /bev/debug (m)'),
+    'bev.inflation_m': (0.20, 'Obstacles grow by this in /bev/mask: robot half-width (m)'),
     'fusion.ray_step_rad': (0.0087, 'Angle between rays (rad)'),
     'planner.rate_hz': (1.0, 'Rate of /bev/mask in pipeline:=baseline (Hz)'),
     'scan.settle_tol_rad': (0.0087, 'Frames with |pan| above this are skipped (rad)'),
@@ -37,8 +43,7 @@ class Bev(Node):
 
     def __init__(self) -> None:
         super().__init__('bev')
-        p = {name: self.declare_parameter(name, default, ParameterDescriptor(
-             description=desc)).value for name, (default, desc) in PARAMETERS.items()}
+        p = declare(self, PARAMETERS)
         self._grid = BevGrid(p['bev.size_px'][0], p['bev.size_px'][1],
                              tuple(p['bev.x_range_m']), tuple(p['bev.y_range_m']))
         self._p = p
@@ -78,6 +83,7 @@ class Bev(Node):
         self._lut = build_lut(self._grid, camera)
         lens = tf.transform.translation
         self._rays = build_ray_bins(self._grid, (lens.x, lens.y), self._p['fusion.ray_step_rad'])
+        self._blind = blind_zone(self._lut.valid, self._rays)  # drivable in /bev/mask
         self.get_logger().info(f'LUT built: {int(self._lut.valid.sum())} visible cells, '
                                f'lens at ({lens.x:.3f}, {lens.y:.3f}, {lens.z:.3f}) m')
         return True
@@ -101,7 +107,10 @@ class Bev(Node):
                 or (stamp - self._last_mask_stamp).nanoseconds * 1e-9
                 >= 1.0 / self._p['planner.rate_hz']):
             self._last_mask_stamp = stamp
-            self._mask_pub.publish(array_to_image(tristate_to_drivable_array(view), header))
+            blind = drivable_blind_cells(view, self._rays, self._blind)
+            near_obstacle = inflate(view == OCCUPIED, self._grid, self._p['bev.inflation_m'])
+            self._mask_pub.publish(array_to_image(
+                tristate_to_drivable_array(view, blind, near_obstacle), header))
         self.get_logger().debug(f'frame {1e3 * (time.perf_counter() - t0):.1f} ms')
 
 

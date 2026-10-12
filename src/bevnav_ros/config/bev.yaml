@@ -6,3 +6,4 @@
       x_range_m: [0.0, 5.3]     # [PAPER] ahead of base_footprint
       y_range_m: [-3.0, 3.0]    # [PAPER] left positive
       debug_grid_m: 0.5         # [OURS] metric grid spacing on /bev/debug
+      inflation_m: 0.20         # [OURS] D9: obstacles grow by the rover half-width (0.40 m / 2) in /bev/mask

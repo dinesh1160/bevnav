@@ -1,0 +1,10 @@
+# Pure-pursuit controller (CLAUDE.md Section 6).
+/**:
+  ros__parameters:
+    controller:
+      rate_hz: 20.0                  # [PAPER]
+      lookahead_m: 0.75              # [PAPER]
+      max_speed_m_s: 0.45            # [PAPER]
+      max_yaw_rate_rad_s: 1.0        # [TUNE] Stage 4
+      curvature_gain: 2.0            # [OURS] v = v_max / (1 + gain * |kappa|)
+      path_timeout_s: 2.0            # [OURS] stop if no fresh path

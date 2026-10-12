@@ -1,0 +1,50 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Reference Frame: odom
+      Cell Size: 1
+      Plane Cell Count: 30
+      Enabled: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+      Enabled: true
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Show Names: false
+      Enabled: true
+    - Class: rviz_default_plugins/Path
+      Name: Path
+      Topic:
+        Value: /bev/path
+      Color: 255; 85; 0
+      Line Width: 0.03
+      Line Style: Billboards
+      Enabled: true
+    - Class: rviz_default_plugins/Image
+      Name: BEV debug
+      Topic:
+        Value: /bev/debug
+      Enabled: true
+    - Class: rviz_default_plugins/Image
+      Name: Camera
+      Topic:
+        Value: /camera/image_raw
+        Reliability Policy: Best Effort
+      Enabled: true
+  Global Options:
+    Fixed Frame: odom
+    Frame Rate: 15
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 60
+      Target Frame: base_footprint

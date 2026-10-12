@@ -2,13 +2,15 @@
 Single entry point for BEVNav: simulation plus navigation (CLAUDE.md Section 4).
 
 Sets use_sim_time once for every node. Starts Gazebo with the scenario world and the rover
-at its start pose (bevnav_eval/config/scenarios/<scenario>.yaml), the source of
+at its start pose (bevnav_eval/config/scenarios/<scenario>.yaml, shifted per seed by
+jittered_start with the trials.yaml jitter), the source of
 odom -> base_footprint (EKF or ground-truth relay), and the navigation nodes (nav.launch.py).
 """
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
+from bevnav_core.transforms import jittered_start, Pose2D
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
@@ -32,11 +34,14 @@ ARGUMENTS = [  # name, default, description, choices
 
 def _wire(context):
     arg = {name: LaunchConfiguration(name).perform(context) for name, *_ in ARGUMENTS}
-    scenario_yaml = os.path.join(get_package_share_directory('bevnav_eval'), 'config',
-                                 'scenarios', f"{arg['scenario']}.yaml")
-    with open(scenario_yaml) as f:
+    config = os.path.join(get_package_share_directory('bevnav_eval'), 'config')
+    with open(os.path.join(config, 'scenarios', f"{arg['scenario']}.yaml")) as f:
         scenario = yaml.safe_load(f)
-    x, y, yaw = scenario['start_pose']
+    with open(os.path.join(config, 'trials.yaml')) as f:
+        trials = yaml.safe_load(f)['trials']
+    start = jittered_start(Pose2D(*scenario['start_pose']), int(arg['seed']),
+                           trials['start_jitter_m'], trials['start_jitter_rad'])
+    x, y, yaw = start.x, start.y, start.yaw
     sim = IncludeLaunchDescription(
         os.path.join(get_package_share_directory('bevnav_sim'), 'launch', 'sim.launch.py'),
         launch_arguments={
@@ -57,7 +62,11 @@ def _wire(context):
     nav = IncludeLaunchDescription(
         os.path.join(get_package_share_directory('bevnav_ros'), 'launch', 'nav.launch.py'),
         launch_arguments={'pipeline': arg['pipeline'], 'seg_backend': arg['seg_backend']}.items())
-    return [sim, pose, nav]
+    actions = [sim, pose, nav]
+    if arg['headless'] == 'false':
+        rviz = os.path.join(get_package_share_directory('bevnav_ros'), 'rviz', 'bevnav.rviz')
+        actions.append(Node(package='rviz2', executable='rviz2', arguments=['-d', rviz]))
+    return actions
 
 
 def generate_launch_description() -> LaunchDescription:

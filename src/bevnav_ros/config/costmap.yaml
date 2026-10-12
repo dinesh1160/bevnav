@@ -1,0 +1,13 @@
+# Galvis cost map (CLAUDE.md Section 6, Eq. 1-4).
+/**:
+  ros__parameters:
+    costmap:
+      w_oa: 3.0                      # [PAPER] obstacle-avoidance weight
+      w_c: 0.5                       # [PAPER] centre-line weight
+      w_g: 2.5                       # [PAPER] goal weight
+      gauss_sigma_m: 0.10            # [TUNE] tuned Stage 4 (0.25 trapped the planner before a 0.6 m gap)
+      gauss_kernel_px: 151           # [TUNE] Stage 4: odd, < 480
+      centerline_min_rows: 40        # [OURS] fewer rows with both edges: W_C = 0
+      centerline_inlier_m: 0.10      # [OURS] D2: RANSAC inlier distance
+      centerline_ransac_iterations: 100  # [OURS] fixed seed, Rule 13
+      default_goal: [5.3, 0.0]       # [OURS] D3: base_footprint goal when no /goal arrived

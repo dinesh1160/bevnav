@@ -1,5 +1,8 @@
-# Galvis planner (CLAUDE.md Section 6). The remaining entries arrive in Stage 4.
+# Galvis planner (CLAUDE.md Section 6, Algorithm 1).
 /**:
   ros__parameters:
     planner:
-      rate_hz: 1.0              # [PAPER] also the /bev/mask rate
+      rate_hz: 1.0                   # [PAPER] also the /bev/mask rate
+      step_m: 0.10                   # [TUNE] Stage 4
+      oscillation_window: 10         # [OURS] D4: revisiting a cell in the last 10 steps stops the path
+      mode: greedy                   # [OURS] astar only as ablation (not implemented yet)

@@ -1,4 +1,4 @@
-# Scenario D: Narrow 0.6 m gap at y = -4.0 in the aisle. World frame, metres, radians.
+# Scenario D: Narrow 0.7 m gap at y = -4.0 in the aisle. World frame, metres, radians.
 world: D_narrow_gap.sdf
 start_pose: [-3.64, -6.5, 1.5708]      # x, y, yaw
 goal: [-3.64, 8.5]             # x, y

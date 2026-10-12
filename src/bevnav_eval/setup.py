@@ -32,6 +32,9 @@ setup(
         'console_scripts': [
             'make_gt_grid = bevnav_eval.make_gt_grid:main',
             'bev_range_check = bevnav_eval.bev_range_check:main',
+            'run_trials = bevnav_eval.run_trials:main',
+            'analyze_bags = bevnav_eval.analyze_bags:main',
+            'make_figures = bevnav_eval.make_figures:main',
         ],
     },
 )

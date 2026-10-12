@@ -1,5 +1,18 @@
 # Evaluation parameters (CLAUDE.md Section 6, Evaluation).
 
+trials:
+  per_scenario: 20              # [OURS]
+  seeds: [0, 19]                # [OURS] inclusive range
+  goal_tolerance_m: 0.5         # [OURS]
+  time_limit_factor: 3.0        # [OURS] limit = factor * route_length_m / time_limit_speed_m_s
+  time_limit_speed_m_s: 0.45    # [OURS] Section 6 definition of the time limit
+  collision_clearance_m: 0.02   # [OURS]
+  clearance_resolution_m: 0.01  # [OURS] ground-truth grid used for clearance (0.05 m is too coarse for 0.02 m)
+  stall_dist_m: 0.10            # [OURS] Section 7 stall outcome (evaluation, not scan triggers)
+  stall_time_s: 10.0            # [OURS] Section 7 stall outcome
+  start_jitter_m: 0.2           # [OURS] seeded sideways start offset, uniform +-
+  start_jitter_rad: 0.1745      # [OURS] seeded start heading offset, uniform +- (10 deg)
+
 gt_grid:
   resolution_m: 0.05          # [OURS] cell size, matches memory.resolution_m
   z_min_m: 0.02               # [OURS] geometry must reach above this height ...

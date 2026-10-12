@@ -49,3 +49,39 @@ def raycast(seed: np.ndarray, rays: RayBins) -> np.ndarray:
     out[(seed == FREE) & (rays.range_m < contact_of_cell)] = FREE
     out[hit & (rays.range_m < contact_of_cell + rays.contact_band_m)] = OCCUPIED
     return out
+
+
+@dataclass(frozen=True)
+class BlindZone:
+    """
+    Cells hidden below the camera's view, in front of the robot (computed once from the LUT).
+
+    mask: (rows, cols) bool, not visible but nearer than the first visible cell on their ray.
+    first_cells, first_bins: flat indices and ray bins of the first visible cells of each ray.
+    """
+
+    mask: np.ndarray
+    first_cells: np.ndarray
+    first_bins: np.ndarray
+
+
+def blind_zone(valid: np.ndarray, rays: RayBins) -> BlindZone:
+    """Find the blind zone; valid: (rows, cols) bool from the LUT. FOV-outside rays excluded."""
+    nearest = np.full(rays.n_bins, np.inf)
+    np.minimum.at(nearest, rays.bin_index[valid], rays.range_m[valid])
+    near_of_cell = nearest[rays.bin_index]
+    mask = ~valid & np.isfinite(near_of_cell) & (rays.range_m < near_of_cell)
+    first = valid & (rays.range_m < near_of_cell + rays.contact_band_m)
+    return BlindZone(mask, np.flatnonzero(first), rays.bin_index[first])
+
+
+def drivable_blind_cells(view: np.ndarray, rays: RayBins, blind: BlindZone) -> np.ndarray:
+    """
+    Blind cells assumed drivable for this view: (rows, cols) bool.
+
+    A blind cell counts only when the first visible cells of its ray are free, i.e. the floor
+    seen just beyond the blind zone continues into it; an obstacle there blocks the whole ray.
+    """
+    blocked = np.zeros(rays.n_bins, bool)
+    np.logical_or.at(blocked, blind.first_bins, view.ravel()[blind.first_cells] != FREE)
+    return blind.mask & ~blocked[rays.bin_index]

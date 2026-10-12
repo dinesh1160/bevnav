@@ -26,3 +26,19 @@ def test_relative_pose_rotated_origin() -> None:
     # A point 1 m along -x in W is on the origin's left (+y).
     r = relative_pose(origin, Pose2D(1.0, 1.0, math.pi / 2))
     assert (r.x, r.y) == pytest.approx((0.0, 1.0))
+
+
+def test_compose_inverts_relative_pose() -> None:
+    from bevnav_core.transforms import compose
+    origin, pose = Pose2D(2.0, 1.0, 0.7), Pose2D(-1.0, 3.0, -2.5)
+    back = compose(origin, relative_pose(origin, pose))
+    assert (back.x, back.y, back.yaw) == pytest.approx((pose.x, pose.y, pose.yaw))
+
+
+def test_to_and_from_frame_are_inverse() -> None:
+    import numpy as np
+    from bevnav_core.transforms import from_frame, to_frame
+    origin = Pose2D(2.0, 1.0, math.pi / 2)
+    pts = np.array([[2.0, 2.0], [1.0, 1.0]])
+    np.testing.assert_allclose(to_frame(origin, pts), [[1.0, 0.0], [0.0, 1.0]], atol=1e-12)
+    np.testing.assert_allclose(from_frame(origin, to_frame(origin, pts)), pts, atol=1e-12)

@@ -3,9 +3,10 @@
 import math
 import time
 
-from bevnav_core.bev import BevGrid, build_lut, FREE, OCCUPIED, UNKNOWN, warp_floor_mask
+from bevnav_core.bev import (BevGrid, build_lut, FREE, inflate, OCCUPIED, UNKNOWN,
+                             warp_floor_mask)
 from bevnav_core.camera_model import base_from_optical_matrix, PinholeCamera
-from bevnav_core.raycast import build_ray_bins, raycast
+from bevnav_core.raycast import blind_zone, build_ray_bins, drivable_blind_cells, raycast
 import numpy as np
 import pytest
 
@@ -107,3 +108,29 @@ def test_warp_and_raycast_under_20_ms() -> None:
         raycast(warp_floor_mask(mask, lut), rays)
         times.append(time.perf_counter() - t0)
     assert np.median(times) < 0.020
+
+
+def test_blind_zone_is_the_hidden_patch_in_front() -> None:
+    lut, rays = build_lut(GRID, CAM), build_ray_bins(GRID, (0, 0), STEP)
+    blind = blind_zone(lut.valid, rays).mask
+    assert blind[cell(0.05, 0.0)] and blind[cell(0.3, 0.1)]      # robot cell and just ahead
+    assert not blind[cell(1.0, 0.0)]                             # visible floor
+    assert not blind[cell(0.3, 2.0)]                             # beside the robot, outside FOV
+
+
+def test_blind_zone_is_drivable_only_where_the_floor_continues() -> None:
+    lut, rays = build_lut(GRID, CAM), build_ray_bins(GRID, (0, 0), STEP)
+    # A wall on the left half starts at 0.4 m, inside the 0.49 m blind zone.
+    view = raycast(warp_floor_mask(render_floor(lambda x, y: ~((x > 0.4) & (y > 0.0))),
+                                   lut), rays)
+    ok = drivable_blind_cells(view, rays, blind_zone(lut.valid, rays))
+    assert ok[cell(0.3, -0.1)]                                   # right: floor continues
+    assert not ok[cell(0.3, 0.1)]                                # left: wall seen first
+
+
+def test_inflate_is_round_in_metres() -> None:
+    dot = np.zeros((480, 480), bool)
+    dot[cell(2.0, 0.0)] = True
+    grown = inflate(dot, GRID, 0.2)
+    assert grown[cell(2.18, 0.0)] and grown[cell(2.0, 0.18)]       # 0.18 m away: inside
+    assert not grown[cell(2.25, 0.0)] and not grown[cell(2.0, 0.25)]  # 0.25 m away: outside

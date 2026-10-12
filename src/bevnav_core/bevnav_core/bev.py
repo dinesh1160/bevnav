@@ -92,3 +92,11 @@ def debug_image(view: np.ndarray, lines: np.ndarray) -> np.ndarray:
     img = DEBUG_COLOURS[view]
     img[lines] = DEBUG_GRID_COLOUR
     return img
+
+
+def inflate(cells: np.ndarray, grid: BevGrid, radius_m: float) -> np.ndarray:
+    """(rows, cols) bool: cells within radius_m (elliptical in cells, round in metres)."""
+    dx, dy = grid.cell_m
+    ry, rx = max(int(round(radius_m / dx)), 0), max(int(round(radius_m / dy)), 0)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * rx + 1, 2 * ry + 1))
+    return cv2.dilate(cells.astype(np.uint8), kernel) > 0

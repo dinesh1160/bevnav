@@ -1,5 +1,8 @@
-# Ray-cast and fusion (CLAUDE.md Section 6). The fusion entries arrive in Stage 6.
+# Ray-cast and six-view fusion (CLAUDE.md Section 6).
 /**:
   ros__parameters:
     fusion:
-      ray_step_rad: 0.0087      # [OURS] 0.5 deg between rays
+      ray_step_rad: 0.0087        # [OURS] 0.5 deg between rays
+      range_weight_r0_m: 3.0      # [TUNE] Stage 5: weight = exp(-r / r0)
+      resolution_m: 0.05          # [OURS] fused 360-degree grid cell, = memory.resolution_m
+      radius_m: 5.3               # [OURS] fused grid half-size, = the BEV reach (bev.x_range_m max)

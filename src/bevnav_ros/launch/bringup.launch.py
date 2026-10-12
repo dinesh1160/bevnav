@@ -21,11 +21,9 @@ BOOL_CHOICES = ['true', 'false']
 
 ARGUMENTS = [  # name, default, description, choices
     ('scenario', 'A', 'Scenario world to load', ['A', 'B', 'C', 'D', 'G', 'H']),
-    ('pipeline', 'baseline', 'Navigation pipeline mode', ['baseline', 'fusion', 'memory', 'full']),
-    ('seg_backend', 'gt', 'Segmentation backend',
-     ['gt', 'segformer', 'pspnet', 'fchardnet', 'onnx_generic']),
-    ('pose_source', 'ekf', 'Source of odom -> base_footprint', ['ekf', 'wheel', 'gt']),
-    ('scan_mode', 'pan', 'How a six-heading scan is taken', ['pan', 'robot_turn']),
+    ('pipeline', 'baseline', 'Navigation pipeline mode', ['baseline', 'full']),
+    ('seg_backend', 'gt', 'Segmentation backend', ['gt', 'segformer']),
+    ('pose_source', 'ekf', 'Source of odom -> base_footprint', ['ekf', 'gt']),
     ('headless', 'false', 'Run Gazebo without GUI and RViz', BOOL_CHOICES),
     ('record', 'false', 'Record a bag of the run', BOOL_CHOICES),
     ('seed', '0', 'Random seed for the trial (int)', None),
@@ -55,10 +53,8 @@ def _wire(context):
         ekf_yaml = os.path.join(get_package_share_directory('bevnav_ros'), 'config', 'ekf.yaml')
         pose = Node(package='robot_localization', executable='ekf_node', name='ekf_filter_node',
                     parameters=[ekf_yaml])
-    elif arg['pose_source'] == 'gt':
-        pose = Node(package='bevnav_ros', executable='gt_tf_relay_node', name='gt_tf_relay')
     else:
-        raise RuntimeError('pose_source:=wheel (EKF without IMU) arrives in Stage 7')
+        pose = Node(package='bevnav_ros', executable='gt_tf_relay_node', name='gt_tf_relay')
     nav = IncludeLaunchDescription(
         os.path.join(get_package_share_directory('bevnav_ros'), 'launch', 'nav.launch.py'),
         launch_arguments={'pipeline': arg['pipeline'], 'seg_backend': arg['seg_backend']}.items())

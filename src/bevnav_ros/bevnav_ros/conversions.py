@@ -7,7 +7,7 @@ from bevnav_core.camera_model import PinholeCamera
 from bevnav_core.transforms import Pose2D
 from builtin_interfaces.msg import Time
 from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
-from nav_msgs.msg import Odometry, Path
+from nav_msgs.msg import OccupancyGrid, Odometry, Path
 import numpy as np
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Header
@@ -135,3 +135,24 @@ def velocity_to_twist(v: float, omega: float) -> Twist:
     t = Twist()
     t.linear.x, t.angular.z = float(v), float(omega)
     return t
+
+
+def tristate_to_occupancy_grid(view: np.ndarray, resolution_m: float, radius_m: float,
+                               header: Header) -> OccupancyGrid:
+    """
+    Centred square tri-state grid -> nav_msgs/OccupancyGrid (-1 unknown, 0 free, 100 occupied).
+
+    view: (n, n), row 0 = largest x, column 0 = largest y, centred on header.frame_id's origin.
+    OccupancyGrid rows run along +y and columns along +x from the lower-left origin.
+    """
+    n = view.shape[0]
+    values = np.full(view.shape, -1, np.int8)
+    values[view == FREE] = 0
+    values[view == OCCUPIED] = 100
+    msg = OccupancyGrid(header=header)
+    msg.info.resolution = float(resolution_m)
+    msg.info.width = msg.info.height = n
+    msg.info.origin.position.x = msg.info.origin.position.y = -float(radius_m)
+    msg.info.origin.orientation.w = 1.0
+    msg.data = values[::-1, ::-1].T.ravel().tolist()
+    return msg

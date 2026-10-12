@@ -8,8 +8,7 @@ from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import SetParameter
 
 EXPECTED_ARGUMENTS = {
-    'scenario', 'pipeline', 'seg_backend', 'pose_source',
-    'scan_mode', 'headless', 'record', 'seed',
+    'scenario', 'pipeline', 'seg_backend', 'pose_source', 'headless', 'record', 'seed',
 }
 
 

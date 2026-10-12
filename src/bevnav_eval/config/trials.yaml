@@ -26,3 +26,11 @@ bev_range_check:              # Stage 3 range test in worlds/calibration/bev_ran
   eval_half_width_m: 0.2      # [OURS] columns |y| below this (inside the 0.5 m face) are measured
   settle_s: 1.0               # [OURS] sim time after a move before views are used
   views_per_range: 10         # [OURS]
+
+scan_check:                   # Stage 5 single-scan test (world frame poses: x, y, yaw)
+  cases:
+    open: {world: H_hidden_goal, pose: [-1.0, -4.0, 1.5708]}      # [OURS] no obstacle within 3 m
+    aisle: {world: A_straight_aisle, pose: [-3.64, -6.5, 1.5708]} # [OURS] scenario A start
+  known_radius_m: 3.0         # Section 7 known-area fraction radius
+  blind_radius_m: 0.49        # = d_near (Stage 2): excluded from the known-area fraction
+  timeout_s: 60.0             # [OURS] wall-clock limit for the whole check

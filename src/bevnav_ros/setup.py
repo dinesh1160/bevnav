@@ -36,6 +36,8 @@ setup(
             'costmap_node = bevnav_ros.costmap_node:main',
             'planner_node = bevnav_ros.planner_node:main',
             'controller_node = bevnav_ros.controller_node:main',
+            'scan_manager_node = bevnav_ros.scan_manager_node:main',
+            'fusion_node = bevnav_ros.fusion_node:main',
         ],
     },
 )

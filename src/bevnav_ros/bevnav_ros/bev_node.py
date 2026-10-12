@@ -16,6 +16,7 @@ import time
 from bevnav_core.bev import (BevGrid, build_lut, debug_image, grid_lines, inflate, OCCUPIED,
                              warp_floor_mask)
 from bevnav_core.raycast import blind_zone, build_ray_bins, drivable_blind_cells, raycast
+from bevnav_core.transforms import wrap_angle
 from bevnav_ros import declare, run
 from bevnav_ros.conversions import (array_to_image, camera_from_msgs, image_to_array,
                                     tristate_to_drivable_array, tristate_to_image_array)
@@ -89,7 +90,7 @@ class Bev(Node):
         return True
 
     def _on_mask(self, msg: Image) -> None:
-        if self._pan is None or abs(self._pan) > self._p['scan.settle_tol_rad']:
+        if self._pan is None or abs(wrap_angle(self._pan)) > self._p['scan.settle_tol_rad']:
             self.get_logger().debug('camera not at pan 0; frame skipped')
             return
         stamp = Time.from_msg(msg.header.stamp)

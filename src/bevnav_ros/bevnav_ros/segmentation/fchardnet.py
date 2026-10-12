@@ -1,1 +1,0 @@
-"""FCHarDNet segmentation backend."""

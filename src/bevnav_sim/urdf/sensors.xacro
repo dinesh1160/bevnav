@@ -24,6 +24,7 @@
       <topic>camera/image_raw</topic>
       <camera>
         <xacro:camera_body/>
+        <visibility_mask>${r.camera.rgb_visibility_mask}</visibility_mask>
       </camera>
       <always_on>1</always_on>
       <update_rate>${r.camera.rate_hz}</update_rate>

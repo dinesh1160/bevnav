@@ -52,5 +52,10 @@
         <label>2</label>
       </plugin>
     </include>
+    <include>
+      <name>aisle_shelf_south_footprint</name>
+      <pose>-2.1 -5.0 0 0 0 1.5708</pose>
+      <uri>model://bevnav_footprint_shelf_de</uri>
+    </include>
   </world>
 </sdf>

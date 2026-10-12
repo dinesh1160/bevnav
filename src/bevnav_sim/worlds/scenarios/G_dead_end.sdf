@@ -53,12 +53,22 @@
       </plugin>
     </include>
     <include>
+      <name>aisle_shelf_north_footprint</name>
+      <pose>-2.1 -0.75 0 0 0 1.5708</pose>
+      <uri>model://bevnav_footprint_shelf_de</uri>
+    </include>
+    <include>
       <name>aisle_shelf_south</name>
       <pose>-2.1 -5.0 0 0 0 1.5708</pose>
       <uri>model://aws_robomaker_warehouse_ShelfE_01</uri>
       <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
         <label>2</label>
       </plugin>
+    </include>
+    <include>
+      <name>aisle_shelf_south_footprint</name>
+      <pose>-2.1 -5.0 0 0 0 1.5708</pose>
+      <uri>model://bevnav_footprint_shelf_de</uri>
     </include>
     <include>
       <name>block_0</name>

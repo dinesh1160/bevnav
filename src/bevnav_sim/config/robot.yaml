@@ -31,6 +31,7 @@ camera:
   clip_near_m: 0.05
   clip_far_m: 20.0
   housing_size_m: 0.04            # cube around the lens (inside clip_near_m)
+  rgb_visibility_mask: 4294967293 # all bits except 2: hides the label-only footprint plates
 
 pan:                            # continuous camera_pan_joint, JointPositionController in
                                 # velocity mode (servo-like): joint speed = p_gain * error

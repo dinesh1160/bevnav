@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<!--
+  Label-only floor plate under ShelfD_01 / ShelfE_01 (footprint from the collision mesh bounds). Only the
+  segmentation camera sees it (visibility_flags 2; the RGB camera's visibility_mask clears that
+  bit), so floor under the shelf's beams is labelled shelf (2), not floor. No collision.
+  Include it with the same pose as the shelf.
+-->
+<sdf version="1.9">
+  <model name="bevnav_footprint_shelf_de">
+    <static>true</static>
+    <link name="link">
+      <visual name="plate">
+        <pose>0.0 0 0.001 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>3.92 0.88 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.8 0.8 0.8 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+        </material>
+        <visibility_flags>2</visibility_flags>
+      </visual>
+    </link>
+    <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+      <label>2</label>
+    </plugin>
+  </model>
+</sdf>

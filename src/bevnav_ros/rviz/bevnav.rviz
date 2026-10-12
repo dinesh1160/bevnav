@@ -10,6 +10,13 @@ Visualization Manager:
       Cell Size: 1
       Plane Cell Count: 30
       Enabled: true
+    - Class: rviz_default_plugins/Map
+      Name: Global map
+      Topic:
+        Value: /bev/global_map
+        Durability Policy: Transient Local
+      Alpha: 0.7
+      Enabled: true
     - Class: rviz_default_plugins/RobotModel
       Name: RobotModel
       Description Source: Topic

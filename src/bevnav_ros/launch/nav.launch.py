@@ -2,8 +2,10 @@
 Navigation nodes for the given pipeline and seg_backend (CLAUDE.md Section 4).
 
 Included by bringup.launch.py (and evaluation launch files), which set use_sim_time.
-Wiring so far: gt_mask_node (seg_backend:=gt), bev_node, costmap_node, planner_node,
-controller_node; pipeline:=full adds scan_manager_node and fusion_node.
+Both pipelines: gt_mask_node (seg_backend:=gt), bev_node, costmap_node, planner_node,
+controller_node. pipeline:=full adds scan_manager_node, fusion_node and memory_node, which
+then publishes /bev/mask instead of bev_node and the route sub-goal /bev/subgoal that
+costmap_node reads as its goal (E5), and planner_node requests the scans.
 """
 
 import os
@@ -21,7 +23,7 @@ def _nodes(context):
     config = os.path.join(get_package_share_directory('bevnav_ros'), 'config')
     yaml = lambda name: os.path.join(config, f'{name}.yaml')  # noqa: E731
     if seg_backend != 'gt':
-        raise RuntimeError(f'seg_backend:={seg_backend} (segmentation_node) arrives in Stage 5')
+        raise RuntimeError(f'seg_backend:={seg_backend} (segmentation_node) arrives in Stage 8')
     nodes = [
         Node(package='bevnav_ros', executable='gt_mask_node', name='gt_mask',
              parameters=[yaml('segmentation')]),
@@ -29,18 +31,21 @@ def _nodes(context):
              parameters=[yaml('bev'), yaml('fusion'), yaml('planner'), yaml('scan'),
                          {'pipeline': pipeline}]),
         Node(package='bevnav_ros', executable='costmap_node', name='costmap',
-             parameters=[yaml('bev'), yaml('costmap')]),
+             parameters=[yaml('bev'), yaml('costmap')],
+             remappings=[('/goal', '/bev/subgoal')] if pipeline == 'full' else []),
         Node(package='bevnav_ros', executable='planner_node', name='planner',
-             parameters=[yaml('bev'), yaml('planner')]),
+             parameters=[yaml('bev'), yaml('planner'), yaml('scan'), {'pipeline': pipeline}]),
         Node(package='bevnav_ros', executable='controller_node', name='controller',
              parameters=[yaml('controller')]),
     ]
-    if pipeline == 'full':      # the persistent map (memory_node) arrives in Stage 6
+    if pipeline == 'full':
         nodes += [
             Node(package='bevnav_ros', executable='scan_manager_node', name='scan_manager',
                  parameters=[yaml('scan')]),
             Node(package='bevnav_ros', executable='fusion_node', name='fusion',
                  parameters=[yaml('bev'), yaml('fusion'), yaml('memory')]),
+            Node(package='bevnav_ros', executable='memory_node', name='memory',
+                 parameters=[yaml('bev'), yaml('memory'), yaml('planner')]),
         ]
     return nodes
 

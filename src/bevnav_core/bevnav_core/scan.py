@@ -60,3 +60,40 @@ class PanScan:
     def timed_out(self, now_s: float) -> bool:
         """Return True when an active scan has run longer than timeout_s."""
         return self.active and now_s - self.t0 > self.timeout_s
+
+
+class ScanTrigger:
+    """
+    Decide when to stop and scan (CLAUDE.md Stage 6).
+
+    At the start, after interval_m driven, and when blocked. Positions in metres (odom), times
+    in s (sim). Blocked means the robot moved less than stall_dist_m in stall_time_s, or the
+    planned path has no step while the robot has moved at least stall_dist_m since the last
+    scan (so one position is not scanned over and over; the stall timer still repeats it).
+    """
+
+    def __init__(self, interval_m: float, stall_dist_m: float, stall_time_s: float) -> None:
+        self.interval_m, self.stall_dist_m, self.stall_time_s = (interval_m, stall_dist_m,
+                                                                 stall_time_s)
+        self.scan_xy = None
+
+    def scanned(self, now_s: float, xy: tuple) -> None:
+        """Record that a scan started at xy: restart the distance and stall counters."""
+        self.scan_xy, self.prev_xy, self.driven_m = xy, xy, 0.0
+        self.anchor_t, self.anchor_xy = now_s, xy
+
+    def update(self, now_s: float, xy: tuple, path_points: int) -> Optional[str]:
+        """Return why a scan is due ('start', 'interval', 'stalled', 'blocked') or None."""
+        if self.scan_xy is None:
+            return 'start'
+        self.driven_m += math.dist(xy, self.prev_xy)
+        self.prev_xy = xy
+        if self.driven_m >= self.interval_m:
+            return 'interval'
+        if math.dist(xy, self.anchor_xy) >= self.stall_dist_m:
+            self.anchor_t, self.anchor_xy = now_s, xy
+        elif now_s - self.anchor_t >= self.stall_time_s:
+            return 'stalled'
+        if path_points < 2 and math.dist(xy, self.scan_xy) >= self.stall_dist_m:
+            return 'blocked'
+        return None

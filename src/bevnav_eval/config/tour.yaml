@@ -1,0 +1,16 @@
+# Stage 7 whole-warehouse tour (CLAUDE.md Stage 7). World frame, metres, radians.
+# Waypoints lie in aisles and open areas with at least 0.5 m clearance (checked against the
+# ground-truth grid); the route sub-goal (E5) finds the way around objects between them.
+world: warehouse_bevnav
+start_pose: [-3.64, -6.5, 1.5708]   # scenario A start, facing north up the west aisle
+waypoints:
+  - [-3.64, 0.5]                    # west aisle
+  - [-3.64, 8.9]                    # top of the west aisle, top-left open area in view
+  - [0.0, 6.7]                      # through the gap in the middle column
+  - [1.8, 9.6]                      # top of the open middle
+  - [1.6, 2.2]                      # open middle
+  - [5.6, 2.3]                      # strip between the north-east blocks and the first shelf
+  - [1.6, 1.5]                      # back to the open middle
+  - [1.6, -4.0]                     # along the east shelf bays
+  - [1.6, -9.4]                     # south end
+leg_timeout_s: 240.0                # [OURS] sim seconds per waypoint before moving on

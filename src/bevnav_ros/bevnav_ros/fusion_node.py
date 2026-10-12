@@ -33,7 +33,7 @@ PARAMETERS = {  # name: (default = YAML value, description)
     'fusion.range_weight_r0_m': (3.0, 'Range weight exp(-r / r0) (m)'),
     'fusion.resolution_m': (0.05, 'Fused grid cell (m)'),
     'fusion.radius_m': (5.3, 'Fused grid half-size (m)'),
-    'memory.l_free': (-0.4, 'Log-odds added for a free observation'),
+    'memory.l_free': (-0.7, 'Log-odds added for a free observation'),
     'memory.l_occ': (0.85, 'Log-odds added for an occupied observation'),
 }
 

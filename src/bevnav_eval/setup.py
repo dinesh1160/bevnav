@@ -36,6 +36,7 @@ setup(
             'analyze_bags = bevnav_eval.analyze_bags:main',
             'make_figures = bevnav_eval.make_figures:main',
             'scan_check = bevnav_eval.scan_check:main',
+            'map_tour = bevnav_eval.map_tour:main',
         ],
     },
 )

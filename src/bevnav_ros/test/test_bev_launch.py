@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import CameraInfo, Image, JointState
+from sensor_msgs.msg import CameraInfo, Image
 from tf2_ros import StaticTransformBroadcaster
 
 W, H, F, HEIGHT, PITCH = 640, 480, 457.85, 0.45, 0.2618
@@ -48,10 +48,12 @@ class TestBev(unittest.TestCase):
         views, masks = [], []
         node.create_subscription(Image, '/bev/view', views.append, 10)
         node.create_subscription(Image, '/bev/mask', masks.append, 10)
-        StaticTransformBroadcaster(node).sendTransform(_camera_tf())
+        pan = TransformStamped()                 # camera facing forward (pan 0)
+        pan.header.frame_id, pan.child_frame_id = 'base_footprint', 'camera_pan_link'
+        pan.transform.rotation.w = 1.0
+        StaticTransformBroadcaster(node).sendTransform([_camera_tf(), pan])
         info_pub = node.create_publisher(CameraInfo, '/camera/camera_info',
                                          qos_profile_sensor_data)
-        js_pub = node.create_publisher(JointState, '/joint_states', qos_profile_sensor_data)
         mask_pub = node.create_publisher(Image, '/seg/floor_mask', qos_profile_sensor_data)
         info = CameraInfo(width=W, height=H, k=[F, 0.0, W / 2, 0.0, F, H / 2, 0.0, 0.0, 1.0])
         mask = Image(height=H, width=W, encoding='mono8', step=W, data=bytes([255]) * (W * H))
@@ -59,7 +61,6 @@ class TestBev(unittest.TestCase):
         try:
             while time.time() < deadline and not (views and masks):
                 info_pub.publish(info)
-                js_pub.publish(JointState(name=['camera_pan_joint'], position=[0.0]))
                 mask_pub.publish(mask)
                 rclpy.spin_once(node, timeout_sec=0.1)
         finally:

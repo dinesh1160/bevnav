@@ -3,7 +3,10 @@ Compute Section 7 trial outcomes and navigation metrics from recorded bags (Rule
 
 Usage: ros2 run bevnav_eval analyze_bags CAMPAIGN
 Reads $BEVNAV_DATA/bags/CAMPAIGN/*/ (bag + trial.yaml), writes
-$BEVNAV_DATA/results/CAMPAIGN/metrics.csv and prints a per-scenario summary.
+$BEVNAV_DATA/results/CAMPAIGN/metrics.csv and prints a per-scenario summary. When a bag has
+/bev/global_map, the map's false-free rate against the ground-truth grid (world -> odom through
+the trial's start pose) is computed for every recorded map: first, last and largest value, and
+the full series in maps/<trial>.csv.
 """
 
 import csv
@@ -14,7 +17,8 @@ import sys
 
 from ament_index_python.packages import get_package_share_directory
 from bevnav_core.metrics import (classify_trial, clearance_map, footprint_clearance,
-                                 OutcomeRules, SUCCESS)
+                                 map_vs_truth, OutcomeRules, SUCCESS, truth_under)
+from bevnav_core.transforms import from_frame, Pose2D
 from bevnav_eval.make_gt_grid import build_grid, load_spec
 from bevnav_eval.run_trials import load_config, outcome_rules
 import numpy as np
@@ -25,16 +29,19 @@ import yaml
 
 
 def read_bag(path: Path) -> dict:
-    """Ground truth (t, xy, yaw) and the chassis contact count from one bag."""
+    """Ground truth (t, xy, yaw), scanning flag per pose and chassis contact count of one bag."""
     reader = SequentialReader()
     reader.open(StorageOptions(uri=str(path), storage_id='mcap'), ConverterOptions('', ''))
     types = {t.name: get_message(t.type) for t in reader.get_all_topics_and_types()}
-    t, xy, yaw, contacts = [], [], [], 0
+    t, xy, yaw, scanning, contacts, now_scanning = [], [], [], [], 0, False
     while reader.has_next():
         topic, data, _ = reader.read_next()
-        if topic == '/gt/pose':
+        if topic == '/pan_scan/state':
+            now_scanning = deserialize_message(data, types[topic]).data == 'SCANNING'
+        elif topic == '/gt/pose':
             m = deserialize_message(data, types[topic])
             q = m.pose.pose.orientation
+            scanning.append(now_scanning)
             t.append(m.header.stamp.sec + m.header.stamp.nanosec * 1e-9)
             xy.append((m.pose.pose.position.x, m.pose.pose.position.y))
             yaw.append(np.arctan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z)))
@@ -42,12 +49,38 @@ def read_bag(path: Path) -> dict:
             contacts += 1
     t = np.array(t)
     return {'t': t - t[0] if len(t) else t, 'xy': np.array(xy).reshape(-1, 2),
-            'yaw': np.array(yaw), 'contacts': contacts}
+            'yaw': np.array(yaw), 'scanning': np.array(scanning, bool), 'contacts': contacts}
+
+
+def map_series(path: Path, start: Pose2D, truth: np.ndarray, spec) -> list:
+    """[(t s, map_vs_truth dict)] for every /bev/global_map with known cells in one bag."""
+    reader = SequentialReader()
+    reader.open(StorageOptions(uri=str(path), storage_id='mcap'), ConverterOptions('', ''))
+    types = {t.name: get_message(t.type) for t in reader.get_all_topics_and_types()}
+    out = []
+    while reader.has_next():
+        topic, data, _ = reader.read_next()
+        if topic != '/bev/global_map':
+            continue
+        m = deserialize_message(data, types[topic])
+        values = np.frombuffer(m.data, np.int8).reshape(m.info.height, m.info.width)
+        iy, ix = np.nonzero(values >= 0)
+        if len(iy) == 0:
+            continue
+        res, o = m.info.resolution, m.info.origin.position
+        odom_xy = np.stack([o.x + (ix + 0.5) * res, o.y + (iy + 0.5) * res], axis=1)
+        under = truth_under(from_frame(start, odom_xy), truth, np.array(spec.origin_m),
+                            spec.resolution_m)
+        state = values[iy, ix]
+        out.append((m.header.stamp.sec + m.header.stamp.nanosec * 1e-9,
+                    map_vs_truth(state == 0, state == 100, under)))
+    return out
 
 
 def trial_metrics(bag: dict, goal: np.ndarray, rules: OutcomeRules, clearance: np.ndarray) -> dict:
     """Outcome and Section 7 navigation metrics of one trial."""
-    outcome = classify_trial(bag['t'], bag['xy'], bag['contacts'], goal, rules, clearance)
+    outcome = classify_trial(bag['t'], bag['xy'], bag['contacts'], goal, rules, clearance,
+                             bag['scanning'])
     dist_to_goal = np.hypot(*(bag['xy'] - goal).T)
     reached = np.flatnonzero(dist_to_goal < rules.goal_tolerance_m)
     end = reached[0] if len(reached) else len(bag['t']) - 1
@@ -70,7 +103,9 @@ def main() -> None:
     robot = yaml.safe_load((sim / 'config' / 'robot.yaml').read_text())
     size = np.array([robot['chassis']['size_m'][0],
                      robot['wheels']['track_m'] + robot['wheels']['width_m']])
-    cmaps, rows = {}, []
+    cmaps, truths, rows = {}, {}, []
+    map_spec = load_spec(Path(get_package_share_directory('bevnav_eval')) / 'config'
+                         / 'trials.yaml')                                  # 0.05 m, as the map
     for trial_dir in sorted((data / 'bags' / campaign).iterdir()):
         meta = yaml.safe_load((trial_dir / 'trial.yaml').read_text())
         key = meta['scenario']
@@ -90,11 +125,27 @@ def main() -> None:
                'pipeline': meta['pipeline'], 'seg_backend': meta['seg_backend']}
         row.update(trial_metrics(bag, np.array(meta['goal']), outcome_rules(trials,
                                  scenarios[key]), clearance))
+        if key not in truths:
+            truths[key] = build_grid(sim / 'worlds' / 'scenarios' / scenarios[key]['world'],
+                                     sim / 'models', map_spec) > 0
+        series = map_series(trial_dir / 'bag', Pose2D(*meta['start_pose']), truths[key],
+                            map_spec)
+        if series:
+            ff = [m['false_free_rate'] for _, m in series]
+            row.update({'map_false_free_first': round(ff[0], 4),
+                        'map_false_free_last': round(ff[-1], 4),
+                        'map_false_free_max': round(max(ff), 4)})
+            maps_dir = data / 'results' / campaign / 'maps'
+            maps_dir.mkdir(parents=True, exist_ok=True)
+            with open(maps_dir / f'{trial_dir.name}.csv', 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['t_s'] + list(series[0][1]))
+                writer.writerows([round(t, 2)] + list(m.values()) for t, m in series)
         rows.append(row)
     out = data / 'results' / campaign
     out.mkdir(parents=True, exist_ok=True)
     with open(out / 'metrics.csv', 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(f, fieldnames=max((list(r) for r in rows), key=len))
         writer.writeheader()
         writer.writerows(rows)
     print(f'{"scenario":8s} {"trials":>6s} {"success":>7s} {"collision":>9s} {"timeout":>7s} '

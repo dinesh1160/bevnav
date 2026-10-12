@@ -2,7 +2,7 @@
 
 import math
 
-from bevnav_core.bev import FREE, OCCUPIED
+from bevnav_core.bev import FREE, OCCUPIED, UNKNOWN
 from bevnav_core.camera_model import PinholeCamera
 from bevnav_core.transforms import Pose2D
 from builtin_interfaces.msg import Time
@@ -72,6 +72,14 @@ def tristate_to_image_array(view: np.ndarray) -> np.ndarray:
     out = np.full(view.shape, TOPIC_UNKNOWN, np.uint8)
     out[view == FREE] = TOPIC_FREE
     out[view == OCCUPIED] = TOPIC_OCCUPIED
+    return out
+
+
+def image_array_to_tristate(values: np.ndarray) -> np.ndarray:
+    """Topic values (0 unknown / 128 occupied / 255 free) -> core tri-state (0 / 2 / 1)."""
+    out = np.full(values.shape, UNKNOWN, np.uint8)
+    out[values == TOPIC_FREE] = FREE
+    out[values == TOPIC_OCCUPIED] = OCCUPIED
     return out
 
 
@@ -155,4 +163,34 @@ def tristate_to_occupancy_grid(view: np.ndarray, resolution_m: float, radius_m: 
     msg.info.origin.position.x = msg.info.origin.position.y = -float(radius_m)
     msg.info.origin.orientation.w = 1.0
     msg.data = values[::-1, ::-1].T.ravel().tolist()
+    return msg
+
+
+def occupancy_grid_to_tristate(msg: OccupancyGrid) -> np.ndarray:
+    """Inverse of tristate_to_occupancy_grid: (n, n) tri-state, row 0 = largest x."""
+    n = msg.info.width
+    values = np.array(msg.data, np.int8).reshape(n, n).T[::-1, ::-1]
+    out = np.full((n, n), UNKNOWN, np.uint8)
+    out[values == 0] = FREE
+    out[values == 100] = OCCUPIED
+    return out
+
+
+def map_to_occupancy_grid(state: np.ndarray, resolution_m: float, origin_m: tuple,
+                          header: Header) -> OccupancyGrid:
+    """
+    Convert the persistent map to nav_msgs/OccupancyGrid (-1 unknown, 0 free, 100 occupied).
+
+    state: (rows along y, cols along x) tri-state, already in OccupancyGrid layout (row 0 at
+    origin_m[1]), as bevnav_core.memory.BevMap.tristate() returns it.
+    """
+    values = np.full(state.shape, -1, np.int8)
+    values[state == FREE] = 0
+    values[state == OCCUPIED] = 100
+    msg = OccupancyGrid(header=header)
+    msg.info.resolution = float(resolution_m)
+    msg.info.height, msg.info.width = state.shape
+    msg.info.origin.position.x, msg.info.origin.position.y = map(float, origin_m)
+    msg.info.origin.orientation.w = 1.0
+    msg.data = values.ravel().tolist()
     return msg

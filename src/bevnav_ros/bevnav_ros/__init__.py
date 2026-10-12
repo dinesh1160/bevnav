@@ -15,8 +15,11 @@ def run(node_class) -> None:
     except Exception:
         if rclpy.ok():
             raise  # a real error, not a callback racing the shutdown
-    node.destroy_node()
-    rclpy.try_shutdown()
+    try:
+        node.destroy_node()
+        rclpy.try_shutdown()
+    except KeyboardInterrupt:
+        pass       # a second SIGINT (launch forwards one too) while shutting down
 
 
 def declare(node, spec: dict) -> dict:

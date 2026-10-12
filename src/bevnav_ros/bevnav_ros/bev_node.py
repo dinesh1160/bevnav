@@ -8,7 +8,10 @@ an obstacle are not drivable, so a path for a point keeps the rover's body clear
 
 The lookup table is built once, from the first CameraInfo and the base_footprint <-
 camera_optical_frame TF taken while the camera is at pan 0. Frames taken with the camera
-panned away from 0 are skipped (rotated views are fused in Stage 6).
+panned away from 0 are skipped (scans are fused by fusion_node). The pan angle is the TF
+base_footprint <- camera_pan_link at the frame's own stamp: the newest joint state can be
+newer than the image, and accepting a frame captured while the camera was still turning
+home after a scan put a misrotated view into the map.
 """
 
 import time
@@ -19,11 +22,12 @@ from bevnav_core.raycast import blind_zone, build_ray_bins, drivable_blind_cells
 from bevnav_core.transforms import wrap_angle
 from bevnav_ros import declare, run
 from bevnav_ros.conversions import (array_to_image, camera_from_msgs, image_to_array,
-                                    tristate_to_drivable_array, tristate_to_image_array)
+                                    transform_to_pose2d, tristate_to_drivable_array,
+                                    tristate_to_image_array)
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
-from sensor_msgs.msg import CameraInfo, Image, JointState
+from sensor_msgs.msg import CameraInfo, Image
 from tf2_ros import Buffer, TransformException, TransformListener
 
 PARAMETERS = {  # name: (default = YAML value, description)
@@ -31,7 +35,7 @@ PARAMETERS = {  # name: (default = YAML value, description)
     'bev.x_range_m': ([0.0, 5.3], 'BEV x range ahead of base_footprint (m)'),
     'bev.y_range_m': ([-3.0, 3.0], 'BEV y range, left positive (m)'),
     'bev.debug_grid_m': (0.5, 'Metric grid spacing on /bev/debug (m)'),
-    'bev.inflation_m': (0.20, 'Obstacles grow by this in /bev/mask: robot half-width (m)'),
+    'bev.inflation_m': (0.275, 'Obstacles grow by this in /bev/mask: robot turning radius (m)'),
     'fusion.ray_step_rad': (0.0087, 'Angle between rays (rad)'),
     'planner.rate_hz': (1.0, 'Rate of /bev/mask in pipeline:=baseline (Hz)'),
     'scan.settle_tol_rad': (0.0087, 'Frames with |pan| above this are skipped (rad)'),
@@ -52,7 +56,6 @@ class Bev(Node):
         self._rays = None
         self._lut = None
         self._info = None
-        self._pan = None
         self._last_mask_stamp = None
         self._tf = Buffer()
         TransformListener(self._tf, self)
@@ -61,14 +64,8 @@ class Bev(Node):
         self._mask_pub = self.create_publisher(Image, '/bev/mask', 10)
         self.create_subscription(CameraInfo, '/camera/camera_info',
                                  lambda m: setattr(self, '_info', m), qos_profile_sensor_data)
-        self.create_subscription(JointState, '/joint_states', self._on_joints,
-                                 qos_profile_sensor_data)
         self.create_subscription(Image, '/seg/floor_mask', self._on_mask, qos_profile_sensor_data)
         self.get_logger().info(', '.join(f'{k}={v}' for k, v in p.items()))
-
-    def _on_joints(self, msg: JointState) -> None:
-        if 'camera_pan_joint' in msg.name:
-            self._pan = msg.position[msg.name.index('camera_pan_joint')]
 
     def _ensure_lut(self, stamp: Time) -> bool:
         if self._lut is not None:
@@ -90,10 +87,16 @@ class Bev(Node):
         return True
 
     def _on_mask(self, msg: Image) -> None:
-        if self._pan is None or abs(wrap_angle(self._pan)) > self._p['scan.settle_tol_rad']:
+        stamp = Time.from_msg(msg.header.stamp)
+        try:
+            pan = transform_to_pose2d(self._tf.lookup_transform(
+                'base_footprint', 'camera_pan_link', stamp)).yaw
+        except TransformException:
+            self.get_logger().debug('no pan TF at the frame stamp yet; frame skipped')
+            return
+        if abs(wrap_angle(pan)) > self._p['scan.settle_tol_rad']:
             self.get_logger().debug('camera not at pan 0; frame skipped')
             return
-        stamp = Time.from_msg(msg.header.stamp)
         if not self._ensure_lut(stamp):
             return
         t0 = time.perf_counter()

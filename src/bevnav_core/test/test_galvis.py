@@ -10,7 +10,7 @@ import pytest
 
 GRID = BevGrid(480, 480, (0.0, 5.3), (-3.0, 3.0))
 X, Y = GRID.cell_centres()
-COST = CostParams(3.0, 0.5, 2.5, 0.10, 151)   # costmap.yaml values
+COST = CostParams(3.0, 0.5, 2.5, 0.05, 151)   # costmap.yaml values
 PURSUIT = PursuitParams(0.75, 0.45, 1.0, 2.0)
 AHEAD = (5.3, 0.0)    # D3 default goal
 

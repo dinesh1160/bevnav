@@ -45,17 +45,19 @@ def classify_trial(t: np.ndarray, xy: np.ndarray, n_contacts: int, goal_xy: np.n
 
     t: (N,) s since the trial start, ascending; xy: (N, 2) ground-truth position (m);
     n_contacts: chassis contact messages; goal_xy: (2,) m, same frame as xy; clearance: (N,)
-    m to the nearest obstacle or None; scanning: (N,) bool or None. With finished=False
-    (live), returns RUNNING while no outcome is decided yet.
+    m to the nearest obstacle or None; scanning: (N,) bool or None (/pan_scan/state ==
+    SCANNING). The time limit counts only time spent not scanning. With finished=False (live),
+    returns RUNNING while no outcome is decided yet.
     """
     if n_contacts > 0 or (clearance is not None
                           and (clearance < rules.collision_clearance_m).any()):
         return COLLISION
-    reached = np.hypot(*(xy - goal_xy).T) < rules.goal_tolerance_m
-    success = bool((reached & (t <= rules.time_limit_s)).any())
-    if not success and len(t) and t[-1] >= rules.time_limit_s:
-        return TIMEOUT
     scanning = np.zeros(len(t), bool) if scanning is None else scanning
+    driving_t = np.cumsum(np.where(scanning, 0.0, np.diff(t, prepend=t[:1])))
+    reached = np.hypot(*(xy - goal_xy).T) < rules.goal_tolerance_m
+    success = bool((reached & (driving_t <= rules.time_limit_s)).any())
+    if not success and len(t) and driving_t[-1] >= rules.time_limit_s:
+        return TIMEOUT
     if not reached.any() and _stalled(t, xy, scanning, rules):
         return STALL
     if success:
@@ -91,3 +93,32 @@ def footprint_clearance(xy: np.ndarray, yaw: np.ndarray, size_m: np.ndarray, cma
     row = np.clip(cmap.shape[0] - 1 - ((py - origin_m[1]) / resolution_m).astype(int), 0,
                   cmap.shape[0] - 1)
     return cmap[row, col].min(axis=1)
+
+
+def map_vs_truth(free: np.ndarray, occupied: np.ndarray, truth_occupied: np.ndarray) -> dict:
+    """
+    Section 7 map metrics of known map cells against the ground truth under them.
+
+    free, occupied, truth_occupied: (N,) bool per map cell. Returns false_free_rate (free cells
+    that are occupied in the truth / free cells), false_occupied_rate (occupied cells that are
+    free in the truth / occupied cells) and the free and occupied cell counts.
+    """
+    n_free, n_occ = int(free.sum()), int(occupied.sum())
+    return {'false_free_rate': float((free & truth_occupied).sum() / max(n_free, 1)),
+            'false_occupied_rate': float((occupied & ~truth_occupied).sum() / max(n_occ, 1)),
+            'free_cells': n_free, 'occupied_cells': n_occ}
+
+
+def truth_under(world_xy: np.ndarray, truth: np.ndarray, origin_m: np.ndarray,
+                resolution_m: float) -> np.ndarray:
+    """(N,) ground-truth cells under world points (N, 2); truth row 0 = largest y (gt grid)."""
+    col = np.clip(((world_xy[:, 0] - origin_m[0]) / resolution_m).astype(int), 0,
+                  truth.shape[1] - 1)
+    row = np.clip(truth.shape[0] - 1 - ((world_xy[:, 1] - origin_m[1]) / resolution_m)
+                  .astype(int), 0, truth.shape[0] - 1)
+    return truth[row, col]
+
+
+def map_coverage(mapped_free: np.ndarray, truth_free: np.ndarray) -> float:
+    """Share of ground-truth free cells the map calls free; both (N,) bool over truth cells."""
+    return float((mapped_free & truth_free).sum() / max(int(truth_free.sum()), 1))

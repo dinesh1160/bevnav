@@ -26,7 +26,7 @@ PARAMETERS = {  # name: (default = YAML value, description)
     'costmap.w_oa': (3.0, 'Obstacle-avoidance weight'),
     'costmap.w_c': (0.5, 'Centre-line weight'),
     'costmap.w_g': (2.5, 'Goal weight'),
-    'costmap.gauss_sigma_m': (0.10, 'Blur of the obstacle contours (m)'),
+    'costmap.gauss_sigma_m': (0.05, 'Blur of the obstacle contours (m)'),
     'costmap.gauss_kernel_px': (151, 'Blur kernel (px, odd)'),
     'costmap.centerline_min_rows': (40, 'Rows with both edges needed for the centre-line'),
     'costmap.centerline_inlier_m': (0.10, 'RANSAC inlier distance (m)'),

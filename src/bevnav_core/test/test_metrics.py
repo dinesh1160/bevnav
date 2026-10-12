@@ -1,7 +1,8 @@
 """Section 7 trial outcomes and footprint clearance."""
 
 from bevnav_core.metrics import (classify_trial, clearance_map, COLLISION, footprint_clearance,
-                                 OutcomeRules, RUNNING, STALL, SUCCESS, TIMEOUT)
+                                 map_coverage, map_vs_truth, OutcomeRules, RUNNING, STALL,
+                                 SUCCESS, TIMEOUT, truth_under)
 from bevnav_core.transforms import jittered_start, Pose2D
 import numpy as np
 import pytest
@@ -36,6 +37,15 @@ def test_timeout_and_stall() -> None:
     assert classify_trial(t, xy, 0, GOAL, RULES, scanning=scanning, finished=False) == RUNNING
 
 
+def test_time_limit_counts_only_driving_time() -> None:
+    t, xy = drive(0.45, 25)                    # reaches the goal after 21 s of driving ...
+    t_scan = np.concatenate([t[:50], t[50:] + 15.0])   # ... plus a 15 s scan at t = 5 s
+    scanning = np.zeros(len(t), bool)
+    scanning[50] = True                        # the pose after the 15 s pause was scanning
+    assert classify_trial(t_scan, xy, 0, GOAL, RULES) == TIMEOUT    # 36 s > 30 s limit
+    assert classify_trial(t_scan, xy, 0, GOAL, RULES, scanning=scanning) == SUCCESS
+
+
 def test_footprint_clearance() -> None:
     occupied = np.zeros((100, 100), bool)
     occupied[:, 60:] = True                    # wall from x = 3.0 m (0.05 m cells, origin 0, 0)
@@ -53,3 +63,14 @@ def test_jittered_start_is_reproducible_and_bounded() -> None:
         p = jittered_start(start, seed, 0.2, 0.1745)
         assert abs(p.y - start.y) < 1e-9          # facing +y: the offset is purely along x
         assert abs(p.x - start.x) <= 0.2 and abs(p.yaw - start.yaw) <= 0.1745
+
+
+def test_map_vs_truth() -> None:
+    truth = np.zeros((4, 4), bool)
+    truth[0, 3] = True                                     # top-right cell: x 0.15-0.2, y 0.15-0.2
+    xy = np.array([[0.175, 0.175], [0.025, 0.025], [0.075, 0.175]])
+    under = truth_under(xy, truth, np.array([0.0, 0.0]), 0.05)
+    assert under.tolist() == [True, False, False]
+    m = map_vs_truth(np.array([True, True, False]), np.array([False, False, True]), under)
+    assert m['false_free_rate'] == 0.5 and m['false_occupied_rate'] == 1.0
+    assert map_coverage(np.array([True, True, False]), np.array([True, False, True])) == 0.5

@@ -27,10 +27,11 @@ import numpy as np
 import rclpy
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from ros_gz_interfaces.msg import Contacts
+from std_msgs.msg import String
 import yaml
 
 TOPICS = ['/gt/pose', '/contact', '/cmd_vel', '/pan_scan/state', '/bev/path',
-          '/odometry/filtered', '/tf', '/tf_static', '/goal']
+          '/odometry/filtered', '/tf', '/tf_static', '/goal', '/bev/global_map']
 IMAGE_TOPICS = ['/bev/mask']        # recorded for the first seed of each scenario only
 
 
@@ -71,12 +72,15 @@ class TrialMonitor:
         self.goal_pub = self.node.create_publisher(PoseStamped, '/goal', latched)
         self.node.create_subscription(Odometry, '/gt/pose', self._on_gt, 50)
         self.node.create_subscription(Contacts, '/contact', self._on_contact, 50)
+        self.node.create_subscription(String, '/pan_scan/state', self._on_state, 10)
+        self.now_scanning = False
         self.last_stamp = None
         self.reset()
 
     def reset(self) -> None:
         """Start a trial: record nothing until the simulation clock restarts."""
-        self.t, self.xy, self.contacts = [], [], 0
+        self.t, self.xy, self.scanning, self.contacts = [], [], [], 0
+        self.now_scanning = False
         self.waiting = self.last_stamp is not None
 
     def _on_gt(self, msg: Odometry) -> None:
@@ -87,7 +91,11 @@ class TrialMonitor:
             return              # still the previous trial's simulation (queued messages)
         self.waiting = False
         self.t.append(stamp)
+        self.scanning.append(self.now_scanning)
         self.xy.append((msg.pose.pose.position.x, msg.pose.pose.position.y))
+
+    def _on_state(self, msg: String) -> None:
+        self.now_scanning = msg.data == 'SCANNING'
 
     def _on_contact(self, msg: Contacts) -> None:
         if not self.waiting:
@@ -121,7 +129,8 @@ def run_trial(mon: TrialMonitor, key: str, seed: int, args, trials: dict, scenar
          f'seg_backend:={args.seg_backend}'], stdout=log, stderr=subprocess.STDOUT,
         start_new_session=True)
     topics = TOPICS + (IMAGE_TOPICS if seed == args.seeds[0] else [])
-    bag = subprocess.Popen(['ros2', 'bag', 'record', '-o', str(out / 'bag')] + topics,
+    bag = subprocess.Popen(['ros2', 'bag', 'record', '--storage-preset-profile', 'zstd_fast',
+                            '-o', str(out / 'bag')] + topics,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                            start_new_session=True)
     mon.reset()
@@ -132,7 +141,7 @@ def run_trial(mon: TrialMonitor, key: str, seed: int, args, trials: dict, scenar
             if len(mon.t) > 1:
                 t = np.array(mon.t) - mon.t[0]
                 outcome = classify_trial(t, np.array(mon.xy), mon.contacts, goal_world, rules,
-                                         finished=False)
+                                         scanning=np.array(mon.scanning), finished=False)
     finally:                    # never leave a simulation running, even after an error
         _stop(bag, 10.0)
         _stop(launch, 20.0)

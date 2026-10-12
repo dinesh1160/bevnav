@@ -38,6 +38,7 @@ setup(
             'controller_node = bevnav_ros.controller_node:main',
             'scan_manager_node = bevnav_ros.scan_manager_node:main',
             'fusion_node = bevnav_ros.fusion_node:main',
+            'memory_node = bevnav_ros.memory_node:main',
         ],
     },
 )

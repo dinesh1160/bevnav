@@ -5,7 +5,7 @@
       w_oa: 3.0                      # [PAPER] obstacle-avoidance weight
       w_c: 0.5                       # [PAPER] centre-line weight
       w_g: 2.5                       # [PAPER] goal weight
-      gauss_sigma_m: 0.10            # [TUNE] tuned Stage 4 (0.25 trapped the planner before a 0.6 m gap)
+      gauss_sigma_m: 0.05            # [TUNE] tuned Stage 6: a neck narrower than ~4 sigma after inflation is a cost wall (0.10 blocked the 0.7 m gap of D)
       gauss_kernel_px: 151           # [TUNE] Stage 4: odd, < 480
       centerline_min_rows: 40        # [OURS] fewer rows with both edges: W_C = 0
       centerline_inlier_m: 0.10      # [OURS] D2: RANSAC inlier distance

@@ -7,3 +7,6 @@
       settle_tol_rad: 0.0087      # [OURS] 0.5 deg; bev_node also skips frames with |pan| above this
       settle_time_s: 0.2          # [TUNE] Stage 5
       timeout_s: 15.0             # [OURS] abort a scan that takes longer
+      interval_m: 2.0             # [TUNE] Stage 6: stop and scan after this distance driven
+      stall_dist_m: 0.10          # [OURS] blocked: moved less than this ...
+      stall_time_s: 5.0           # [OURS] ... in this time (below the 10 s trial stall outcome)

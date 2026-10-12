@@ -255,5 +255,10 @@
         <label>3</label>
       </plugin>
     </include>
+    <include>
+      <name>aws_robomaker_warehouse_TrashCanC_01_002_footprint</name>
+      <pose>-1.592441 7.715420 0 0 0 0</pose>
+      <uri>model://bevnav_footprint_trashcan_c</uri>
+    </include>
   </model>
 </sdf>

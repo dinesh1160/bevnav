@@ -85,3 +85,33 @@ def drivable_blind_cells(view: np.ndarray, rays: RayBins, blind: BlindZone) -> n
     blocked = np.zeros(rays.n_bins, bool)
     np.logical_or.at(blocked, blind.first_bins, view.ravel()[blind.first_cells] != FREE)
     return blind.mask & ~blocked[rays.bin_index]
+
+
+def fill_blind_disc(state: np.ndarray, x: np.ndarray, y: np.ndarray,
+                    cell_m: float) -> np.ndarray:
+    """
+    Fill the unseen disc around the origin of a 360-degree grid (CLAUDE.md Stage 6).
+
+    state: (rows, cols) tri-state, e.g. a fused scan; x, y: (rows, cols) cell centres (metres)
+    around the ray origin (0, 0); cell_m: cell size. Rays are one cell wide at the nearest known
+    cell, so every ray meets the ring of known cells around the disc. On each ray, the unknown
+    cells nearer than its first known cell become FREE when that cell is FREE (the floor seen
+    just beyond the disc continues into it), as drivable_blind_cells does for one view. Rays
+    with no known cell stay unknown. Returns a new array.
+    """
+    known = state != UNKNOWN
+    r = np.hypot(x, y)
+    if not known.any():
+        return state.copy()
+    step = cell_m / max(r[known].min(), cell_m)
+    n_bins = int(math.ceil(2 * math.pi / step))
+    bins = np.floor((np.arctan2(y, x) + math.pi) / step).astype(np.int64) % n_bins
+    nearest = np.full(n_bins, np.inf)
+    np.minimum.at(nearest, bins[known], r[known])
+    near_of_cell = nearest[bins]
+    first = known & (r < near_of_cell + cell_m)
+    blocked = np.zeros(n_bins, bool)
+    np.logical_or.at(blocked, bins[first], state[first] != FREE)
+    out = state.copy()
+    out[~known & np.isfinite(near_of_cell) & (r < near_of_cell) & ~blocked[bins]] = FREE
+    return out

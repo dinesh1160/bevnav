@@ -92,9 +92,8 @@ def trial_metrics(bag: dict, goal: np.ndarray, rules: OutcomeRules, clearance: n
             'final_dist_to_goal_m': round(float(dist_to_goal[-1]), 2)}
 
 
-def main() -> None:
-    """Analyse every trial of a campaign."""
-    campaign = sys.argv[1]
+def analyze(campaign: str) -> list:
+    """Analyse every trial of a campaign; write metrics.csv; return the rows."""
     data = Path(os.environ.get('BEVNAV_DATA', Path.home() / 'bevnav_data'))
     trials, scenarios = load_config()
     sim = Path(get_package_share_directory('bevnav_sim'))
@@ -156,6 +155,12 @@ def main() -> None:
         print(f'{key:8s} {len(rs):6d} {count("success"):7d} {count("collision"):9d} '
               f'{count("timeout"):7d} {count("stall"):5d}')
     print(f'wrote {out / "metrics.csv"}')
+    return rows
+
+
+def main() -> None:
+    """Analyse every trial of the campaign named on the command line."""
+    analyze(sys.argv[1])
 
 
 if __name__ == '__main__':

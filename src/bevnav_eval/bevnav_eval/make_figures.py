@@ -3,10 +3,14 @@ Figures and tables from recorded campaigns.
 
 Usage: ros2 run bevnav_eval make_figures fig5 CAMPAIGN
        ros2 run bevnav_eval make_figures latency CAMPAIGN
+       ros2 run bevnav_eval make_figures all [BASELINE_CAMPAIGN FULL_CAMPAIGN]   (s9base g3)
 fig5:    for each scenario, one recorded /bev/mask frame (first seed's bag) -> the three Galvis
          cost terms, the total and the planned path, as in the paper's Fig. 5.
 latency: cost map, planning and control time per call (median over every recorded /bev/mask),
          next to an empty column for the paper's Table II.
+all:     Stage 9 in one command: analyze_bags on both campaigns, fig5 and latency on the
+         baseline campaign, the baseline-vs-full table and the Stage 7 map-tour result, all
+         collected in $BEVNAV_DATA/results/summary/ (comparison.csv, comparison.md, map_tour.*).
 Outputs go to $BEVNAV_DATA/results/CAMPAIGN/. Navigation parameters are read from the installed
 bevnav_ros config (a runtime lookup; a package dependency would form a cycle).
 """
@@ -14,6 +18,7 @@ bevnav_ros config (a runtime lookup; a package dependency would form a cycle).
 import csv
 import os
 from pathlib import Path
+import shutil
 import sys
 import time
 
@@ -24,6 +29,7 @@ from bevnav_core.costmap import cost_map, CostParams
 from bevnav_core.planner import plan_greedy
 from bevnav_core.pursuit import pursuit_command, PursuitParams
 from bevnav_core.transforms import Pose2D, relative_pose
+from bevnav_eval.analyze_bags import analyze
 from matplotlib.figure import Figure
 import numpy as np
 from rclpy.serialization import deserialize_message
@@ -157,10 +163,65 @@ def latency(campaign_dir: Path, out: Path) -> None:
     print(f'wrote {out}/latency.csv')
 
 
+def _summary(rows: list) -> dict:
+    """Per scenario: trials, successes, mean time to goal and smallest clearance."""
+    out = {}
+    for key in sorted({r['scenario'] for r in rows}):
+        rs = [r for r in rows if r['scenario'] == key]
+        times = [float(r['time_to_goal_s']) for r in rs if r['time_to_goal_s'] != '']
+        out[key] = {'trials': len(rs), 'success': sum(r['outcome'] == 'success' for r in rs),
+                    'outcomes': ' '.join(sorted(r['outcome'] for r in rs)),
+                    'time_s': round(float(np.mean(times)), 1) if times else '',
+                    'min_clearance_m': min(float(r['min_clearance_m']) for r in rs)}
+    return out
+
+
+def all_results(data: Path, baseline: str, full: str) -> None:
+    """Rebuild every Stage 9 table and figure from the recorded bags."""
+    out = data / 'results' / 'summary'
+    out.mkdir(parents=True, exist_ok=True)
+    tables = {name: _summary(analyze(campaign))
+              for name, campaign in (('baseline', baseline), ('full', full))}
+    for command in (fig5, latency):
+        command(data / 'bags' / baseline, data / 'results' / baseline)
+    rows = []
+    for key in sorted(set(tables['baseline']) | set(tables['full'])):
+        row = {'scenario': key}
+        for name, table in tables.items():
+            t = table.get(key, {})
+            row.update({f'{name}_success': f"{t['success']}/{t['trials']}" if t else '',
+                        f'{name}_outcomes': t.get('outcomes', ''),
+                        f'{name}_time_s': t.get('time_s', ''),
+                        f'{name}_min_clearance_m': t.get('min_clearance_m', '')})
+        rows.append(row)
+    with open(out / 'comparison.csv', 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    lines = ['| Scenario | Baseline success | Full success | Baseline time (s) | Full time (s) '
+             '| Baseline min clearance (m) | Full min clearance (m) |',
+             '| --- | --- | --- | --- | --- | --- | --- |']
+    lines += [f"| {r['scenario']} | {r['baseline_success']} ({r['baseline_outcomes']}) | "
+              f"{r['full_success']} ({r['full_outcomes']}) | {r['baseline_time_s']} | "
+              f"{r['full_time_s']} | {r['baseline_min_clearance_m']} | "
+              f"{r['full_min_clearance_m']} |" for r in rows]
+    (out / 'comparison.md').write_text('\n'.join(lines) + '\n')
+    tour = data / 'results' / 'map_tour'
+    for name in ('ekf.csv', 'ekf.png', 'gt.csv', 'gt_path.png'):
+        if (tour / name).exists():
+            shutil.copy(tour / name, out / f'map_tour_{name}')
+    print('\n'.join(lines))
+    print(f'wrote {out}')
+
+
 def main() -> None:
-    """Dispatch fig5 or latency for a campaign."""
-    command, campaign = sys.argv[1], sys.argv[2]
+    """Dispatch fig5, latency (one campaign) or all (Stage 9)."""
+    command = sys.argv[1]
     data = Path(os.environ.get('BEVNAV_DATA', Path.home() / 'bevnav_data'))
+    if command == 'all':
+        all_results(data, *(sys.argv[2:4] if len(sys.argv) > 3 else ('s9base', 'g3')))
+        return
+    campaign = sys.argv[2]
     out = data / 'results' / campaign
     out.mkdir(parents=True, exist_ok=True)
     {'fig5': fig5, 'latency': latency}[command](data / 'bags' / campaign, out)

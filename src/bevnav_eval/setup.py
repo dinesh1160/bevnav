@@ -37,6 +37,7 @@ setup(
             'make_figures = bevnav_eval.make_figures:main',
             'scan_check = bevnav_eval.scan_check:main',
             'map_tour = bevnav_eval.map_tour:main',
+            'send_goal = bevnav_eval.send_goal:main',
         ],
     },
 )

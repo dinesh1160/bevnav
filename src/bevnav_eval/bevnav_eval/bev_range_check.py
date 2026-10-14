@@ -28,7 +28,7 @@ from sensor_msgs.msg import Image
 import yaml
 
 WORLD, BOX = 'bev_ranges', 'range_box'
-OCCUPIED = 128   # /bev/view value (CLAUDE.md Section 5)
+OCCUPIED = 128   # /bev/view value (design spec Section 5)
 
 
 def _yaw(msg: Odometry) -> float:

@@ -1,5 +1,5 @@
 """
-Ray-cast a BEV view into free / occupied / unknown (CLAUDE.md Stage 3).
+Ray-cast a BEV view into free / occupied / unknown (Stage 3).
 
 Rays leave the camera's ground point every step_rad. Each cell belongs to the ray (angular
 bin) through its centre. Along a ray, floor cells before the first non-floor cell are free,
@@ -90,7 +90,7 @@ def drivable_blind_cells(view: np.ndarray, rays: RayBins, blind: BlindZone) -> n
 def fill_blind_disc(state: np.ndarray, x: np.ndarray, y: np.ndarray,
                     cell_m: float) -> np.ndarray:
     """
-    Fill the unseen disc around the origin of a 360-degree grid (CLAUDE.md Stage 6).
+    Fill the unseen disc around the origin of a 360-degree grid (Stage 6).
 
     state: (rows, cols) tri-state, e.g. a fused scan; x, y: (rows, cols) cell centres (metres)
     around the ray origin (0, 0); cell_m: cell size. Rays are one cell wide at the nearest known

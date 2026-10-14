@@ -1,5 +1,5 @@
 """
-Lookup-table inverse perspective mapping onto the Galvis BEV grid (CLAUDE.md Section 5).
+Lookup-table inverse perspective mapping onto the Galvis BEV grid (design spec Section 5).
 
 Grid convention: row i -> x = x_max - (i + 0.5) * dx, column j -> y = y_max - (j + 0.5) * dy,
 so row 0 is the far edge and column 0 the left edge (a driver's view), in base_footprint.

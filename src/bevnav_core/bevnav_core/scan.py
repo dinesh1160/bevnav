@@ -1,5 +1,5 @@
 """
-Six-heading pan scan sequencing (CLAUDE.md Stage 5), independent of ROS.
+Six-heading pan scan sequencing (Stage 5), independent of ROS.
 
 The pan joint is continuous and reports unwrapped angles, and its controller takes the long way
 round when a wrapped target crosses +-pi. Targets are therefore unwrapped: base + k * step for
@@ -64,7 +64,7 @@ class PanScan:
 
 class ScanTrigger:
     """
-    Decide when to stop and scan (CLAUDE.md Stage 6).
+    Decide when to stop and scan (Stage 6).
 
     At the start, after interval_m driven, and when blocked. Positions in metres (odom), times
     in s (sim). Blocked means the robot moved less than stall_dist_m in stall_time_s, or the

@@ -1,4 +1,4 @@
-"""Every bevnav_core module listed in CLAUDE.md Section 3 exists and imports."""
+"""Every bevnav_core module listed in design spec Section 3 exists and imports."""
 
 import importlib
 

@@ -89,7 +89,7 @@ def test_box_beside_the_line_is_passed() -> None:
 
 
 def test_box_across_the_line_stops_safely() -> None:
-    # Known limitation of the greedy planner (CLAUDE.md Section 9): an obstacle across the
+    # Known limitation of the greedy planner (design spec Section 9): an obstacle across the
     # straight line to the goal is a local minimum. The path must stop before it, not hit it.
     box = (X > 2.0) & (X < 2.5) & (Y > -0.15) & (Y < 0.6)
     path = plan((np.abs(Y) < 1.0) & ~box)

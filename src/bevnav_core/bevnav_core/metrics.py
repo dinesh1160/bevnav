@@ -1,5 +1,5 @@
 """
-Evaluation metrics as defined in CLAUDE.md Section 7, from ground-truth data.
+Evaluation metrics as defined in design spec Section 7, from ground-truth data.
 
 Used both live (to end a trial) and on recorded bags (the reported results), so a trial is
 judged the same way in both places.

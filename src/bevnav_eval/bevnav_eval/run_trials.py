@@ -1,5 +1,5 @@
 """
-Run closed-loop trials and record a bag per trial (CLAUDE.md Stage 4 task 7, Stage 8 task 2).
+Run closed-loop trials and record a bag per trial (Stage 4 task 7, Stage 8 task 2).
 
 Usage: ros2 run bevnav_eval run_trials CAMPAIGN [--scenarios A B C D] [--seeds 0 19]
        [--pipeline baseline] [--seg-backend gt]

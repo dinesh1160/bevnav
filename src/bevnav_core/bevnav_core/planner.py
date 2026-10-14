@@ -5,7 +5,7 @@ From the robot (0, 0), repeatedly step step_m to the cheapest of the 8 neighbour
 stops when it reaches the grid boundary (ahead or sideways), when every neighbour is
 non-drivable, or when it would revisit a cell from the last oscillation_window steps (D4).
 
-Route (E5, CLAUDE.md Stage 6): the shortest 8-connected route to the goal over a grid of
+Route (E5, Stage 6): the shortest 8-connected route to the goal over a grid of
 blocked cells (Dijkstra), and the point a given distance along it, used as the cost map's goal.
 """
 

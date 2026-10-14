@@ -1,5 +1,5 @@
 """
-Build the ground-truth occupancy grid of a scenario from its SDF (CLAUDE.md Section 7).
+Build the ground-truth occupancy grid of a scenario from its SDF (design spec Section 7).
 
 A collision geometry counts when its height range overlaps [gt_grid.z_min_m, gt_grid.z_max_m];
 a cell is occupied when the footprint of a counted geometry covers it.

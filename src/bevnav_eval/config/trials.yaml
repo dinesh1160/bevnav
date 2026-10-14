@@ -1,4 +1,4 @@
-# Evaluation parameters (CLAUDE.md Section 6, Evaluation).
+# Evaluation parameters (design spec Section 6, Evaluation).
 
 trials:
   per_scenario: 20              # [OURS]

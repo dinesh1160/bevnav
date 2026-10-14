@@ -1,5 +1,5 @@
 """
-Persistent BEV map in odom and the Galvis window cut from it (CLAUDE.md Stage 6).
+Persistent BEV map in odom and the Galvis window cut from it (Stage 6).
 
 The map is a log-odds grid laid out like nav_msgs/OccupancyGrid: log_odds[iy, ix] covers
 x = origin_x + (ix + 0.5) * resolution, y = origin_y + (iy + 0.5) * resolution (odom, metres).

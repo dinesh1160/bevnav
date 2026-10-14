@@ -1,4 +1,4 @@
-# Stage 7 whole-warehouse tour (CLAUDE.md Stage 7). World frame, metres, radians.
+# Stage 7 whole-warehouse tour (Stage 7). World frame, metres, radians.
 # Waypoints lie in aisles and open areas with at least 0.5 m clearance (checked against the
 # ground-truth grid); the route sub-goal (E5) finds the way around objects between them.
 world: warehouse_bevnav

@@ -1,5 +1,5 @@
 """
-Fuse the six views of a pan scan into one 360-degree tri-state grid (CLAUDE.md Stage 5).
+Fuse the six views of a pan scan into one 360-degree tri-state grid (Stage 5).
 
 Each view is a ray-cast tri-state grid on the Galvis BEV grid, expressed in the pan frame: the
 frame base_footprint would have if the camera faced forward. A view taken at pan angle theta is

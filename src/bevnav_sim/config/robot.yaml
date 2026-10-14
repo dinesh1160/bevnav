@@ -1,4 +1,4 @@
-# BEVNav rover geometry and sensors (CLAUDE.md Section 6). Every number in the robot
+# BEVNav rover geometry and sensors (design spec Section 6). Every number in the robot
 # xacro comes from here. Metres, radians, kilograms, hertz. Values are [OURS] estimates
 # for a BeetleBot-class rover unless tagged [TUNE].
 

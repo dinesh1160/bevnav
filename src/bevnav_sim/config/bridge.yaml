@@ -1,4 +1,4 @@
-# ros_gz_bridge topics (CLAUDE.md Section 5). Not bridged on purpose: the diff-drive and
+# ros_gz_bridge topics (design spec Section 5). Not bridged on purpose: the diff-drive and
 # ground-truth TF topics, so only the EKF or gt_tf_relay_node publishes odom -> base_footprint.
 
 - ros_topic_name: /clock

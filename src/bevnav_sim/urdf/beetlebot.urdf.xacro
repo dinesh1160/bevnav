@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
   BEVNav rover: 4-wheel skid-steer chassis, roof-centre mast with a pan joint carrying one
-  RGB camera. Every number comes from config/robot.yaml. Frames follow CLAUDE.md Section 5.
+  RGB camera. Every number comes from config/robot.yaml. Frames follow design spec Section 5.
   Args: seg_camera (true/false) adds the simulator-only label camera.
 -->
 <robot name="beetlebot" xmlns:xacro="http://www.ros.org/wiki/xacro">

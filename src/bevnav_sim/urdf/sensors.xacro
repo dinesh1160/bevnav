@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Sensors (CLAUDE.md Section 5). Navigation uses only the RGB camera and the IMU.
+  Sensors (design spec Section 5). Navigation uses only the RGB camera and the IMU.
   The label camera (simulator-only ground truth), lidar, contact sensor and ground-truth
   pose are evaluation inputs. Expects the property r (robot.yaml) from beetlebot.urdf.xacro.
 -->

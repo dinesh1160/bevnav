@@ -8,7 +8,5 @@ log/
 *.db3
 __pycache__/
 
-# Local only: project notes and AI assistant files
-CLAUDE.md
-.claude/
+# Local only: project notes
 docs/

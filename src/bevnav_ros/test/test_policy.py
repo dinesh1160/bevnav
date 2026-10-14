@@ -1,5 +1,5 @@
 """
-Project policy tests (CLAUDE.md Rules 7 and 8, Section 4).
+Project policy tests (design spec rules 7 and 8, Section 4).
 
 (a) No file in bevnav_core imports rclpy, message packages, tf2 or torch.
 (b) No navigation module refers to /scan or /contact; only gt_mask_node refers to

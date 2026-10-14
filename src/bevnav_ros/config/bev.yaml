@@ -1,4 +1,4 @@
-# BEV grid (CLAUDE.md Section 6). Galvis Table I values are [PAPER].
+# BEV grid (design spec Section 6). Galvis Table I values are [PAPER].
 /**:
   ros__parameters:
     bev:

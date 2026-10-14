@@ -1,5 +1,5 @@
 """
-Fuse the six /pan_scan/views of a scan into /bev/fused (CLAUDE.md Stage 5).
+Fuse the six /pan_scan/views of a scan into /bev/fused (Stage 5).
 
 Views are collected between SCANNING and DONE on /pan_scan/state; fusion waits (retrying on
 each CameraInfo) until TF covers every view's stamp. Each view's pan angle comes

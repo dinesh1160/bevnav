@@ -1,4 +1,4 @@
-# Pure-pursuit controller (CLAUDE.md Section 6).
+# Pure-pursuit controller (design spec Section 6).
 /**:
   ros__parameters:
     controller:

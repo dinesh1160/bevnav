@@ -12,7 +12,7 @@ import numpy as np
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Header
 
-# Tri-state image values on topics (CLAUDE.md Section 5): 0 unknown, 128 occupied, 255 free.
+# Tri-state image values on topics (design spec Section 5): 0 unknown, 128 occupied, 255 free.
 TOPIC_UNKNOWN, TOPIC_OCCUPIED, TOPIC_FREE = 0, 128, 255
 _CHANNELS = {'mono8': 1, 'rgb8': 3}
 

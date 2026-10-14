@@ -1,5 +1,5 @@
 """
-Single entry point for BEVNav: simulation plus navigation (CLAUDE.md Section 4).
+Single entry point for BEVNav: simulation plus navigation (design spec Section 4).
 
 Sets use_sim_time once for every node. Starts Gazebo with the scenario world and the rover
 at its start pose (bevnav_eval/config/scenarios/<scenario>.yaml, shifted per seed by

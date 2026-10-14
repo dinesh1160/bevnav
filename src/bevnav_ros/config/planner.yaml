@@ -1,4 +1,4 @@
-# Galvis planner (CLAUDE.md Section 6, Algorithm 1).
+# Galvis planner (design spec Section 6, Algorithm 1).
 /**:
   ros__parameters:
     planner:

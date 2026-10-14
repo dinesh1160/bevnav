@@ -1,4 +1,4 @@
-# Ray-cast and six-view fusion (CLAUDE.md Section 6).
+# Ray-cast and six-view fusion (design spec Section 6).
 /**:
   ros__parameters:
     fusion:

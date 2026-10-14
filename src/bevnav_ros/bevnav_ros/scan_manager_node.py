@@ -1,5 +1,5 @@
 """
-Six-heading pan scan (CLAUDE.md Stage 5).
+Six-heading pan scan (Stage 5).
 
 On /scan_manager/start_scan, pan the camera through scan.headings steps, take one
 /seg/floor_mask per heading after the pan settled, publish it on /pan_scan/views, and report

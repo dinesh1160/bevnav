@@ -1,4 +1,4 @@
-# Galvis cost map (CLAUDE.md Section 6, Eq. 1-4).
+# Galvis cost map (design spec Section 6, Eq. 1-4).
 /**:
   ros__parameters:
     costmap:

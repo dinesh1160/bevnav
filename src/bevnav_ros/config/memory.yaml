@@ -1,4 +1,4 @@
-# Persistent BEV map (CLAUDE.md Section 6). The log-odds values are also used by fusion.
+# Persistent BEV map (design spec Section 6). The log-odds values are also used by fusion.
 /**:
   ros__parameters:
     memory:

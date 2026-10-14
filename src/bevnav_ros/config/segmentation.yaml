@@ -1,4 +1,4 @@
-# Segmentation parameters (CLAUDE.md Section 6). Labels are the gz-sim-label-system values
+# Segmentation parameters (design spec Section 6). Labels are the gz-sim-label-system values
 # set in the bevnav_sim worlds and models; the label image repeats the value in R, G and B.
 /**:
   ros__parameters:

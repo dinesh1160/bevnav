@@ -1,5 +1,5 @@
 """
-Navigation nodes for the given pipeline and seg_backend (CLAUDE.md Section 4).
+Navigation nodes for the given pipeline and seg_backend (design spec Section 4).
 
 Included by bringup.launch.py (and evaluation launch files), which set use_sim_time.
 Both pipelines: gt_mask_node (seg_backend:=gt), bev_node, costmap_node, planner_node,

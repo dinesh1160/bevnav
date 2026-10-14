@@ -2,7 +2,7 @@
 Ground-truth pose to odom -> base_footprint TF when pose_source:=gt.
 
 The first /gt/pose message defines odom (the trial start pose maps world -> odom,
-CLAUDE.md Section 7). Each TF copies the stamp of the /gt/pose message it came from.
+design spec Section 7). Each TF copies the stamp of the /gt/pose message it came from.
 """
 
 from bevnav_core.transforms import relative_pose

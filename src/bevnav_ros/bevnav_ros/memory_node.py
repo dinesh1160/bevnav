@@ -1,5 +1,5 @@
 """
-Persistent BEV map (CLAUDE.md Stage 6).
+Persistent BEV map (Stage 6).
 
 /bev/view and /bev/fused in, /bev/mask and /bev/global_map out.
 Every /bev/view frame and every /bev/fused scan is added to a log-odds grid in odom at the

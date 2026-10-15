@@ -91,7 +91,7 @@ the core and publish. Every tunable value is a ROS parameter in `bevnav_ros/conf
 
 ```bash
 mkdir -p ~/bevnav_ws && cd ~/bevnav_ws
-git clone <this repository> .
+git clone https://github.com/dinesh1160/bevnav.git 
 source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths src --ignore-src -y
 colcon build --symlink-install

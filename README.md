@@ -1,4 +1,4 @@
-# BEVNav: camera-only navigation with a 360° bird's-eye-view map
+# BEVNav: Camera-Only Indoor Navigation with an Active Pan Scan and a Persistent Bird’s-Eye-View Map
 
 BEVNav is a ROS 2 navigation stack for a small ground rover that sees the world through **one
 RGB camera on a pan joint** and no range sensor. The camera image is turned into a top-down
